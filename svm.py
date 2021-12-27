@@ -1,10 +1,10 @@
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import PolynomialFeatures
+#from sklearn.preprocessing import PolynomialFeatures
 from sklearn.svm import SVC
-#from sklearn.model_selection import cross_val_predict
-#from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import confusion_matrix
 import pandas as pd
 import numpy as np
 #Input requires the arrays of xyz (Xtrain/xtest)
@@ -71,7 +71,10 @@ def main():
             ("linear_svc", SVC(kernel="poly",degree=3,C=5)),
     ])
     svm_clf.fit(X_train, y_train)
-    print(svm_clf.predict([X_test[0]]))
+    svm_clf.predict(X_test)
+    ytrainpred = cross_val_predict(svm_clf,X_train,y_train, cv=3)
+    conf_mx = confusion_matrix(y_train,ytrainpred)
+    print(conf_mx)
     # #default uses the one vs one strategy, preferred as it is faster for a large
     # #training dataset
 
