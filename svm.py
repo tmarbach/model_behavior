@@ -1,7 +1,7 @@
-from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_predict
-from sklearn.metrics import confusion_matrix
+#from sklearn.model_selection import cross_val_predict
+#from sklearn.metrics import confusion_matrix
 import pandas as pd
 import numpy as np
 import csv
@@ -38,7 +38,8 @@ def construct_xy(windows):
     Input:
         windows -- list of dataframes of all one class 
     Output:
-        total_data -- list of lists of flattened accel datawith class label a the end
+        Xdata -- arrays of xyz data of each window stacked together
+        ydata -- integer class labels for each window
     """
     positions = ['acc_x', 'acc_y', 'acc_z']
     total_behaviors = ["s","l","t","c","a","d","i","w"]
@@ -55,21 +56,23 @@ def construct_xy(windows):
 
 
 def main():
-    df = pd.read_csv("~/CNNworkspace/raterdata/dec21_cleanPennf1.csv")
+    df = pd.read_csv("~/CNNworkspace/testdataDEC/nomil_cleanstitch.csv")
     windows = pull_window(df, 5)
     Xdata,ydata = construct_xy(windows)
-   # with open("CNNworkspace/raterdata/dec21Pennf1flat_data.csv", "w", newline="") as f:
-  #      writer = csv.writer(f)
-    #    writer.writerows(all_data)
-
-
-    X_train, X_test, y_train, y_test = train_test_split(
-...     Xdata, ydata, test_size=0.2, random_state=42)
-    svm_clf = SVC()
-    #default uses the one vs one strategy, preferred as it is faster for a large
-    #training dataset
-    svm_clf.fit(X_train, y_train)
-    y_pred = svm_clf.predict(X_test)
+    nsamples, nx, ny = Xdata.shape
+    Xdata2d = Xdata.reshape((nsamples,nx*ny))
+    #Xdata2d = Xdata2d.transpose().reshape(-1, 1)
+    print(Xdata[0])
+    print(Xdata2d[0])
+    # print(Xdata2d[1])
+    # X_train, X_test, y_train, y_test = train_test_split(
+    #     Xdata2d, ydata, test_size=0.2, random_state=42)
+    # svm_clf = LinearSVC(C=1,loss="hinge")
+    # # works until here
+    # svm_clf.fit(X_train, y_train)
+    # svm_clf.predict(X_test[0])
+    # #default uses the one vs one strategy, preferred as it is faster for a large
+    # #training dataset
 
     
 
