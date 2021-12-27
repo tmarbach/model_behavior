@@ -1,5 +1,7 @@
-from sklearn.svm import LinearSVC
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import LinearSVC
 #from sklearn.model_selection import cross_val_predict
 #from sklearn.metrics import confusion_matrix
 import pandas as pd
@@ -52,25 +54,24 @@ def construct_xy(windows):
         Xdata.append(window[positions].to_numpy())
         ydata.append(mapping[window['behavior'].iloc[0]])
         
-    return np.stack(Xdata), ydata
+    return np.stack(Xdata), np.asarray(ydata)
 
 
 def main():
-    df = pd.read_csv("~/CNNworkspace/testdataDEC/nomil_cleanstitch.csv")
-    windows = pull_window(df, 5)
+    df = pd.read_csv("~/CNNworkspace/raterdata/dec21_cleanPennf1.csv")
+    windows = pull_window(df, 25)
     Xdata,ydata = construct_xy(windows)
     nsamples, nx, ny = Xdata.shape
     Xdata2d = Xdata.reshape((nsamples,nx*ny))
-    #Xdata2d = Xdata2d.transpose().reshape(-1, 1)
-    print(Xdata[0])
-    print(Xdata2d[0])
-    # print(Xdata2d[1])
-    # X_train, X_test, y_train, y_test = train_test_split(
-    #     Xdata2d, ydata, test_size=0.2, random_state=42)
-    # svm_clf = LinearSVC(C=1,loss="hinge")
-    # # works until here
-    # svm_clf.fit(X_train, y_train)
-    # svm_clf.predict(X_test[0])
+    # Xdata2d = Xdata2d.reshape(-1, 1)
+    X_train, X_test, y_train, y_test = train_test_split(
+        Xdata2d, ydata, test_size=0.2, random_state=42)
+    svm_clf = Pipeline([
+            ("scalar", StandardScaler()),
+            ("linear_svc", LinearSVC(C=1,dual=False,loss="hinge")),
+    ])
+    svm_clf.fit(X_train, y_train)
+    svm_clf.predict([X_test[0]])
     # #default uses the one vs one strategy, preferred as it is faster for a large
     # #training dataset
 
