@@ -1,12 +1,12 @@
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import LinearSVC
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.svm import SVC
 #from sklearn.model_selection import cross_val_predict
 #from sklearn.metrics import confusion_matrix
 import pandas as pd
 import numpy as np
-import csv
 #Input requires the arrays of xyz (Xtrain/xtest)
 #  and the single number class(ytrain/ytest)
 
@@ -63,15 +63,15 @@ def main():
     Xdata,ydata = construct_xy(windows)
     nsamples, nx, ny = Xdata.shape
     Xdata2d = Xdata.reshape((nsamples,nx*ny))
-    # Xdata2d = Xdata2d.reshape(-1, 1)
     X_train, X_test, y_train, y_test = train_test_split(
         Xdata2d, ydata, test_size=0.2, random_state=42)
     svm_clf = Pipeline([
+          #  ("poly_features",PolynomialFeatures(degree=3)),
             ("scalar", StandardScaler()),
-            ("linear_svc", LinearSVC(C=1,dual=False,loss="hinge")),
+            ("linear_svc", SVC(kernel="poly",degree=3,C=5)),
     ])
     svm_clf.fit(X_train, y_train)
-    svm_clf.predict([X_test[0]])
+    print(svm_clf.predict([X_test[0]]))
     # #default uses the one vs one strategy, preferred as it is faster for a large
     # #training dataset
 
