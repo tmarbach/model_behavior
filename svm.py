@@ -1,16 +1,16 @@
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-#from sklearn.preprocessing import PolynomialFeatures
 from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import precision_recall_fscore_support
 import pandas as pd
 import numpy as np
 #Input requires the arrays of xyz (Xtrain/xtest)
 #  and the single number class(ytrain/ytest)
 
-
+#TODO: have inputs of the parameters/hyperparameters and record those in the output
 
 
 def pull_window(df, window_size):
@@ -71,10 +71,16 @@ def main():
             ("linear_svc", SVC(kernel="poly",degree=3,C=5)),
     ])
     svm_clf.fit(X_train, y_train)
-    svm_clf.predict(X_test)
-    ytrainpred = cross_val_predict(svm_clf,X_train,y_train, cv=3)
-    conf_mx = confusion_matrix(y_train,ytrainpred)
-    print(conf_mx)
+    ypred = svm_clf.predict(X_test)
+    scores = precision_recall_fscore_support(
+        y_test, 
+        ypred, 
+        average=None,
+        labels = ["s","l","t","c","a","d","i","w"]
+        )
+    # ytrainpred = cross_val_predict(svm_clf,X_train,y_train, cv=3)
+    # conf_mx = confusion_matrix(y_train,ytrainpred)
+    print(scores)
     # #default uses the one vs one strategy, preferred as it is faster for a large
     # #training dataset
 
