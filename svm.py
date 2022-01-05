@@ -4,7 +4,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import precision_recall_fscore_support
+#from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import classification_report
 import pandas as pd
 import numpy as np
 #Input requires the arrays of xyz (Xtrain/xtest)
@@ -72,15 +73,23 @@ def main():
     ])
     svm_clf.fit(X_train, y_train)
     ypred = svm_clf.predict(X_test)
-    scores = precision_recall_fscore_support(
-        y_test, 
-        ypred, 
-        average=None,
-        labels = ["s","l","t","c","a","d","i","w"]
-        )
+    # scores = precision_recall_fscore_support(
+    #     y_test, 
+    #     ypred, 
+    #     average=None,
+    #     labels = ["s","l","t","c","a","d","i","w"]
+    #     )
     # ytrainpred = cross_val_predict(svm_clf,X_train,y_train, cv=3)
-    # conf_mx = confusion_matrix(y_train,ytrainpred)
-    print(scores)
+    # conf_mx = confusion_matrix(y_train,ytrainpred,labels = [0,1,2,3,4,5,6])
+    report = classification_report(
+        y_test,
+        ypred, 
+        target_names=["s","l","c","a","d","i","w"],
+        output_dict=True
+        )
+    reportdf = pd.DataFrame(report).transpose()
+    reportdf.to_csv('svm_stats.csv')
+    print(report)
     # #default uses the one vs one strategy, preferred as it is faster for a large
     # #training dataset
 
