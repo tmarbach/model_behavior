@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+from sklearn.model_selection import train_test_split
+
 
 
 
@@ -10,11 +12,13 @@ def pull_window(df, window_size):
     window_size -- number of rows of data to convert to 1 row for AcceleRater (25 = 1sec)
     Output:
     windows -- list of lists of accel data (EX:[x,y,z,...,x,y,z,class_label])
+    allclasses -- list of the behavior classes that are present in the windows
     """
-    if window_size > df.shape[0]:
-        raise ValueError('Window larger than data given')
+    classes = []
     windows = []
     number_of_rows_minus_window = df.shape[0] - window_size + 1
+    if window_size > df.shape[0]:
+        raise ValueError('Window larger than data given')
     for i in range(0, number_of_rows_minus_window, window_size):
         window = df[i:i+window_size]
         if len(set(window.behavior)) != 1:
@@ -22,7 +26,9 @@ def pull_window(df, window_size):
         if len(set(np.ediff1d(window.input_index))) != 1:
              continue
         windows.append(window)
-    return windows
+        classes.append(window.iloc[0]['behavior'])
+    allclasses = set(classes)
+    return windows, list(allclasses)
 
 
 def construct_xy(windows):
@@ -46,10 +52,16 @@ def construct_xy(windows):
         
     return np.stack(Xdata), np.asarray(ydata)
 
+def reduce_dimesions(Xdata, ydata):
+    nsamples, nx, ny = Xdata.shape
+    Xdata2d = Xdata.reshape((nsamples,nx*ny))
+    X_train, X_test, y_train, y_test = train_test_split(
+        Xdata2d, ydata, test_size=0.2, random_state=42)
+    return X_train, X_test, y_train, y_test
 
-def main():
+# def main():
 
 
-if __name__=="__main__":
-    main()y
+# if __name__=="__main__":
+#     main()
 

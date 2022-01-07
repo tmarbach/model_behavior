@@ -5,6 +5,8 @@ from rf import forester
 from window_maker import reduce_dimesions
 from window_maker import pull_window
 from window_maker import construct_xy
+from svm import svm
+from kmeans import kmeans
 import pandas as pd
 #import window_maker
 #import svm
@@ -13,60 +15,67 @@ import pandas as pd
 def arguments():
     parser = argparse.ArgumentParser(
             prog='model_selector', 
-            description="Select a ML model to apply to acceleration data",\
+            description="Select a ML model to apply to acceleration data",
             epilog=""
                  )
     parser.add_argument(
             "-m"
             "--model",
-            help = "input the path to the csv file of accelerometer data that requires cleaning",
-            default=False)
+            help = "Choose a ML model of: svm, rf, or kmeans",
+            default=False, 
+            type=str
+            )
     parser.add_argument(
             "-w",
             "--window_size",
-            help="Directs the output to a name of your choice",
-            default=False, type=int)
-            # check for int, throw error if not int
+            help="Number of rows to include in each data point (25 rows per second)",
+            default=False, 
+            type=int
+            )
     parser.add_argument(
             "-o",
             "--output_file",
             help="Directs the output to a name of your choice",
-            default=False)
+            default=False
+            )
     return parser.parse_args()
 
 
-def output_data(reportdf, modwinpar_list, output_filename):
+def output_data(reportdf, modwin, output_filename):
 
         """
         Input:
         score_tuple -- various accuracy scores in tuple form
-        modwinpar_list -- list of modelname, windowsize, parameters
+        modwinpar_list -- list of modelname and windowsize
         output_filename -- title for output filename
 
         Output:
         summary_stats -- print out summary stats after running
         recorded stats -- record stats in output file
         """
-        df = reportdf.append(modwinpar_list, ignore_index=True, header=False)
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        data_label = modwin.append(dt_string)
+        df = reportdf.append(data_label, ignore_index=True, header=False)
         df.append(pd.Series(), ignore_index=True)
         if os.path.exists(output_filename):
                 df.to_csv(output_filename, mode='a')# append if already exists
         elif output_filename == False:
-                df.to_csv('summary_scores_'+str(modwinpar_list[0]), index=False)
+                df.to_csv('summary_scores_'+str(modwin[0]), index=False)
         else:
                 df.to_csv(output_filename, index=False)
 
 
-def model_flow(model, Xdata, X_train, X_test, y_train, y_test, classes):
-        model = str(model)
+def run_a_model(model, Xdata, X_train, X_test, y_train, y_test, classes):
         if model == 'svm':
-                svmreport = svm(X_train, X_test, y_train, y_test)
+                svmreport = svm(X_train, X_test, y_train, y_test, classes)
                 return svmreport
         elif model == 'rf':
-                rfreport = forester(X_train, X_test, y_train, y_test)
+                rfreport = forester(X_train, X_test, y_train, y_test, classes)
                 return rfreport
         elif model == 'kmeans':
                 kmreport = kmeans(Xdata,classes)
+                #returns something different than the other models
+                #because its unsupervised.
                 return kmreport
         
 
@@ -77,11 +86,12 @@ def main():
     windows, classes = pull_window(df, int(args.window_size))
     Xdata, ydata = construct_xy(windows)
     X_train, X_test, y_train, y_test = reduce_dimesions(Xdata,ydata)
-    report = model_flow(args.model, X_train, X_test, y_train, y_test, classes)
+    report = run_a_model(args.model, X_train, X_test, y_train, y_test, classes)
     #report = forester(X_train, X_test, y_train, y_test, classes)
     reportdf = pd.DataFrame(report).transpose()
     #reportdf.to_csv('svm_stats.csv')
-    output_data(reportdf,BLANK,args.output_file)
+    modwin = [args.model, args.window_size]
+    output_data(reportdf,modwin,args.output_file)
     print()
     #output_data(args.csv_file, clean_data, args.output)
     # return output_data which will be a csv file of the cleaned
