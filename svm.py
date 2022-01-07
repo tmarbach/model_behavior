@@ -21,11 +21,13 @@ def pull_window(df, window_size):
     window_size -- number of rows of data to convert to 1 row for AcceleRater (25 = 1sec)
     Output:
     windows -- list of lists of accel data (EX:[x,y,z,...,x,y,z,class_label])
+    allclasses -- list of the behavior classes that are present in the windows
     """
-    if window_size > df.shape[0]:
-        raise ValueError('Window larger than data given')
+    classes = []
     windows = []
     number_of_rows_minus_window = df.shape[0] - window_size + 1
+    if window_size > df.shape[0]:
+        raise ValueError('Window larger than data given')
     for i in range(0, number_of_rows_minus_window, window_size):
         window = df[i:i+window_size]
         if len(set(window.behavior)) != 1:
@@ -33,7 +35,9 @@ def pull_window(df, window_size):
         if len(set(np.ediff1d(window.input_index))) != 1:
              continue
         windows.append(window)
-    return windows
+        classes.append(window.iloc[0]['behavior'])
+    allclasses = set(classes)
+    return windows, list(allclasses)
 
 
 def construct_xy(windows):
@@ -58,21 +62,45 @@ def construct_xy(windows):
     return np.stack(Xdata), np.asarray(ydata)
 
 
-def main():
-    df = pd.read_csv("~/CNNworkspace/raterdata/dec21_cleanPennf1.csv")
-    windows = pull_window(df, 25)
-    Xdata,ydata = construct_xy(windows)
-    nsamples, nx, ny = Xdata.shape
-    Xdata2d = Xdata.reshape((nsamples,nx*ny))
-    X_train, X_test, y_train, y_test = train_test_split(
-        Xdata2d, ydata, test_size=0.2, random_state=42)
+def svm(X_train, X_test, y_train, y_test, classes):
     svm_clf = Pipeline([
-          #  ("poly_features",PolynomialFeatures(degree=3)),
             ("scalar", StandardScaler()),
             ("linear_svc", SVC(kernel="poly",degree=3,C=5)),
     ])
     svm_clf.fit(X_train, y_train)
     ypred = svm_clf.predict(X_test)
+    report = classification_report(
+        y_test,
+        ypred, 
+        target_names=classes,
+        output_dict=True
+        )
+    return report
+
+def main():
+    df = pd.read_csv("~/CNNworkspace/raterdata/dec21_cleanPennf1.csv")
+    windows, classes = pull_window(df, 25)
+    Xdata,ydata = construct_xy(windows)
+    nsamples, nx, ny = Xdata.shape
+    Xdata2d = Xdata.reshape((nsamples,nx*ny))
+    X_train, X_test, y_train, y_test = train_test_split(
+        Xdata2d, ydata, test_size=0.2, random_state=42)
+    report = svm(X_train, X_test, y_train, y_test, classes)
+    # svm_clf = Pipeline([
+    #         ("scalar", StandardScaler()),
+    #         ("linear_svc", SVC(kernel="poly",degree=3,C=5)),
+    # ])
+    # svm_clf.fit(X_train, y_train)
+    # ypred = svm_clf.predict(X_test)
+    # report = classification_report(
+    #     y_test,
+    #     ypred, 
+    #     target_names=["s","l","c","a","d","i","w"],
+    #     output_dict=True
+    #     )
+    reportdf = pd.DataFrame(report).transpose()
+    reportdf.to_csv('svm_stats.csv')
+    print(report)
     # scores = precision_recall_fscore_support(
     #     y_test, 
     #     ypred, 
@@ -81,15 +109,6 @@ def main():
     #     )
     # ytrainpred = cross_val_predict(svm_clf,X_train,y_train, cv=3)
     # conf_mx = confusion_matrix(y_train,ytrainpred,labels = [0,1,2,3,4,5,6])
-    report = classification_report(
-        y_test,
-        ypred, 
-        target_names=["s","l","c","a","d","i","w"],
-        output_dict=True
-        )
-    reportdf = pd.DataFrame(report).transpose()
-    reportdf.to_csv('svm_stats.csv')
-    print(report)
     # #default uses the one vs one strategy, preferred as it is faster for a large
     # #training dataset
 
