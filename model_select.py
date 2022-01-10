@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 from datetime import datetime
 import argparse
@@ -8,8 +10,7 @@ from window_maker import construct_xy
 from svm import svm
 from kmeans import kmeans
 import pandas as pd
-#import window_maker
-#import svm
+
 
 
 def arguments():
@@ -39,6 +40,7 @@ def arguments():
             default=False
             )
     return parser.parse_args()
+
 
 
 def output_data(reportdf, model, output_filename, n_samples, n_features, n_classes):
