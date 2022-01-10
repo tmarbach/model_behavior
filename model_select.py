@@ -20,7 +20,7 @@ def arguments():
             epilog=""
                  )
     parser.add_argument(
-            "-m"
+            "-m",
             "--model",
             help = "Choose a ML model of: svm, rf, or kmeans",
             default=False, 
@@ -55,18 +55,22 @@ def output_data(reportdf, model, output_filename, n_samples, n_features, n_class
         summary_stats -- print out summary stats after running
         recorded stats -- record stats in output file
         """
-        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-        data_label = model.append(dt_string)
+        data_record = []
+        dt_string = str(datetime.now())
         samfeaclas = f"# classes: {n_classes}; # samples: {n_samples}; # features {n_features}"
-        data_label = data_label.append(samfeaclas)
-        df = reportdf.append(data_label, ignore_index=True, header=False)
-        df.append(pd.Series(), ignore_index=True)
+        data_record.append(model)
+        data_record.append(dt_string)
+        data_record.append(samfeaclas)
+        data_series = pd.Series(data_record)
+        df = reportdf.append(data_series, ignore_index=True)
+        separater = "_______________________________________________"
+        rdf = df.append(pd.Series(separater), ignore_index=True)
         if os.path.exists(output_filename):
-                df.to_csv(output_filename, mode='a')# append if already exists
+                rdf.to_csv(output_filename, mode='a')# append if already exists
         elif output_filename == False:
-                df.to_csv('summary_scores_'+ model + '_'+str(n_features), index=False)
+                rdf.to_csv('summary_scores_'+ model + '_'+str(n_features), index=False)
         else:
-                df.to_csv(output_filename, index=False)
+                rdf.to_csv(output_filename, index=False)
 
 
 def run_a_model(model, Xdata, X_train, X_test, y_train, y_test, classes):
@@ -88,12 +92,12 @@ def main():
     args = arguments()
     df = pd.read_csv("~/CNNworkspace/raterdata/dec21_cleanPennf1.csv")
     windows, classes = pull_window(df, int(args.window_size))
-    (n_samples, n_features), n_classes = windows.shape, len(classes)
     Xdata, ydata = construct_xy(windows)
+    n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(classes)
     X_train, X_test, y_train, y_test = reduce_dimesions(Xdata,ydata)
-    report = run_a_model(args.model, X_train, X_test, y_train, y_test, classes)
+    report = run_a_model(args.model, Xdata, X_train, X_test, y_train, y_test, classes)
     reportdf = pd.DataFrame(report).transpose()
-    output_data(reportdf,args.model,args.output_file,)
+    output_data(reportdf,args.model,args.output_file,n_samples, n_features, n_classes)
     print()
     # return output_file (csv of report statistics of the model.)
 
