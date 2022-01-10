@@ -41,7 +41,7 @@ def arguments():
     return parser.parse_args()
 
 
-def output_data(reportdf, modwin, output_filename):
+def output_data(reportdf, model, output_filename, n_samples, n_features, n_classes):
 
         """
         Input:
@@ -54,13 +54,15 @@ def output_data(reportdf, modwin, output_filename):
         recorded stats -- record stats in output file
         """
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-        data_label = modwin.append(dt_string)
+        data_label = model.append(dt_string)
+        samfeaclas = f"# classes: {n_classes}; # samples: {n_samples}; # features {n_features}"
+        data_label = data_label.append(samfeaclas)
         df = reportdf.append(data_label, ignore_index=True, header=False)
         df.append(pd.Series(), ignore_index=True)
         if os.path.exists(output_filename):
                 df.to_csv(output_filename, mode='a')# append if already exists
         elif output_filename == False:
-                df.to_csv('summary_scores_'+str(modwin[0]), index=False)
+                df.to_csv('summary_scores_'+ model + '_'+str(n_features), index=False)
         else:
                 df.to_csv(output_filename, index=False)
 
@@ -84,18 +86,14 @@ def main():
     args = arguments()
     df = pd.read_csv("~/CNNworkspace/raterdata/dec21_cleanPennf1.csv")
     windows, classes = pull_window(df, int(args.window_size))
+    (n_samples, n_features), n_classes = windows.shape, len(classes)
     Xdata, ydata = construct_xy(windows)
     X_train, X_test, y_train, y_test = reduce_dimesions(Xdata,ydata)
     report = run_a_model(args.model, X_train, X_test, y_train, y_test, classes)
-    #report = forester(X_train, X_test, y_train, y_test, classes)
     reportdf = pd.DataFrame(report).transpose()
-    #reportdf.to_csv('svm_stats.csv')
-    modwin = [args.model, args.window_size]
-    output_data(reportdf,modwin,args.output_file)
+    output_data(reportdf,args.model,args.output_file,)
     print()
-    #output_data(args.csv_file, clean_data, args.output)
-    # return output_data which will be a csv file of the cleaned
-    # and reorganized data, other scripts will work with it from there.
+    # return output_file (csv of report statistics of the model.)
 
 if __name__ == "__main__":
     main()
