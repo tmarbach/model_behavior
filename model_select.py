@@ -43,7 +43,7 @@ def arguments():
 
 
 
-def output_data(reportdf, model, output_filename, n_samples, n_features, n_classes):
+def output_data(reportdf, model, output_filename, n_samples, n_features, n_classes, class_map):
 
         """
         Input:
@@ -61,10 +61,9 @@ def output_data(reportdf, model, output_filename, n_samples, n_features, n_class
         data_record.append(model)
         data_record.append(dt_string)
         data_record.append(samfeaclas)
+        data_record.append(class_map)
         data_series = pd.Series(data_record)
         df = reportdf.append(data_series, ignore_index=True)
-        separater = "_______________________________________________"
-        rdf = df.append(pd.Series(separater), ignore_index=True)
         if os.path.exists(output_filename):
                 rdf.to_csv(output_filename, mode='a')# append if already exists
         elif output_filename == False:
@@ -89,15 +88,16 @@ def run_a_model(model, Xdata, X_train, X_test, y_train, y_test, classes):
 
 
 def main():
+        # input dic key {'s': 0, 'l': 1, 't': 2, 'c': 3, 'a': 4, 'd': 5, 'i': 6, 'w': 7}
     args = arguments()
     df = pd.read_csv("~/CNNworkspace/raterdata/dec21_cleanPennf1.csv")
     windows, classes = pull_window(df, int(args.window_size))
-    Xdata, ydata = construct_xy(windows)
+    Xdata, ydata, class_map = construct_xy(windows)
     n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(classes)
     X_train, X_test, y_train, y_test = reduce_dimesions(Xdata,ydata)
     report = run_a_model(args.model, Xdata, X_train, X_test, y_train, y_test, classes)
     reportdf = pd.DataFrame(report).transpose()
-    output_data(reportdf,args.model,args.output_file,n_samples, n_features, n_classes)
+    output_data(reportdf,args.model,args.output_file,n_samples, n_features, n_classes, class_map)
     print()
     # return output_file (csv of report statistics of the model.)
 

@@ -28,6 +28,7 @@ def pull_window(df, window_size):
         windows.append(window)
         classes.append(window.iloc[0]['behavior'])
     allclasses = set(classes)
+    print("Windows pulled")
     return windows, list(allclasses)
 
 
@@ -50,7 +51,8 @@ def construct_xy(windows):
         Xdata.append(window[positions].to_numpy())
         ydata.append(mapping[window['behavior'].iloc[0]])
         
-    return np.stack(Xdata), np.asarray(ydata)
+    return np.stack(Xdata), np.asarray(ydata), mapping
+
 
 def reduce_dimesions(Xdata, ydata):
     nsamples, nx, ny = Xdata.shape
