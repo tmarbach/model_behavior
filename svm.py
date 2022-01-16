@@ -63,9 +63,11 @@ def construct_xy(windows):
 
 
 def svm(X_train, X_test, y_train, y_test, classes):
+    degrees = 3
+    c_value = 5
     svm_clf = Pipeline([
             ("scalar", StandardScaler()),
-            ("linear_svc", SVC(kernel="poly",degree=3,C=5)),
+            ("linear_svc", SVC(kernel="poly",degree=degrees,C=c_value)),
     ])
     svm_clf.fit(X_train, y_train)
     ypred = svm_clf.predict(X_test)
@@ -75,7 +77,9 @@ def svm(X_train, X_test, y_train, y_test, classes):
         target_names=classes,
         output_dict=True
         )
-    return report
+    parameters = ["degrees:" + str(degrees), "C Value:" + str(c_value)]
+    # return report, parameters, hyperparameters (if there are any)
+    return report, parameters
 
 def main():
     df = pd.read_csv("~/CNNworkspace/raterdata/dec21_cleanPennf1.csv")
