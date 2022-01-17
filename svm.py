@@ -63,11 +63,9 @@ def construct_xy(windows):
 
 
 def svm(X_train, X_test, y_train, y_test, classes):
-    degrees = 3
-    c_value = 5
     svm_clf = Pipeline([
             ("scalar", StandardScaler()),
-            ("linear_svc", SVC(kernel="poly",degree=degrees,C=c_value)),
+            ("linear_svc", SVC(kernel="poly",degree=3,C=5)),
     ])
     svm_clf.fit(X_train, y_train)
     ypred = svm_clf.predict(X_test)
@@ -77,8 +75,8 @@ def svm(X_train, X_test, y_train, y_test, classes):
         target_names=classes,
         output_dict=True
         )
-    parameters = ["degrees:" + str(degrees), "C Value:" + str(c_value)]
-    # return report, parameters, hyperparameters (if there are any)
+    parameters = svm_clf.get_params()
+    # return report, parameters (dict with parameter names mapped to values)
     return report, parameters
 
 def main():
