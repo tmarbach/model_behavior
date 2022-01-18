@@ -34,9 +34,16 @@ def arguments():
             type=int
             )
     parser.add_argument(
+
             "-o",
             "--output_file",
             help="Directs the output to a name of your choice",
+            default=False
+            )
+    parser.add_argument(
+            "-p",
+            "--param_output_file",
+            help="Directs the output of parameters to a name of your choice",
             default=False
             )
     return parser.parse_args()
@@ -86,6 +93,18 @@ def run_a_model(model, Xdata, X_train, X_test, y_train, y_test, classes):
                 #because its unsupervised.
                 return kmreport
         
+
+def output_params(param_filename, model_params, model):
+        param_data = [model, model_params]
+        if os.path.exists(param_filename):
+                paramdf = pd.DataFrame(param_data)
+                paramdf.to_csv(param_filename, mode='a')
+        elif output_filename == False:
+                paramdf = pd.DataFrame(columns=["model", "parameters"], data = param_data)
+                paramdf.to_csv('model_params', index=False)
+        else:
+                paramdf = pd.DataFrame(columns=["model", "parameters"], data = param_data)
+                paramdf.to_csv(output_filename, index=False)
 
 
 def main():
