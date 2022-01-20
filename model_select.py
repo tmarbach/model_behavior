@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import re
 from datetime import datetime
 import argparse
 from rf import forester
@@ -99,12 +100,30 @@ def output_params(param_filename, model_params, model):
         if os.path.exists(param_filename):
                 paramdf = pd.DataFrame(param_data)
                 paramdf.to_csv(param_filename, mode='a')
-        elif output_filename == False:
+        elif param_filename == False:
                 paramdf = pd.DataFrame(columns=["model", "parameters"], data = param_data)
                 paramdf.to_csv('model_params', index=False)
         else:
                 paramdf = pd.DataFrame(columns=["model", "parameters"], data = param_data)
                 paramdf.to_csv(output_filename, index=False)
+
+
+def label_output(model, window_size, n_samples, n_features, n_classes, class_map):
+        data_record = []
+        samfeaclas = f"# classes: {n_classes}; # samples: {n_samples}; # features {n_features}"
+        data_record.append(model)
+        data_record.append(window_size)
+        data_record.append(samfeaclas)
+        data_record.append(class_map)
+
+
+def construct_key(model, window_size):
+        key = []
+        dt_string = str(datetime.now())
+        numbers = re.sub("[^0-9]", "", dt_string)
+        key.append(model)
+        key.append(window_size)
+        key.append(numbers)
 
 
 def main():
@@ -117,6 +136,8 @@ def main():
     X_train, X_test, y_train, y_test = reduce_dimesions(Xdata,ydata)
     report, parameters = run_a_model(args.model, Xdata, X_train, X_test, y_train, y_test, classes)
     reportdf = pd.DataFrame(report).transpose()
+    output_params(args.param_output_file, parameters, args.model)
+    label_output(args.model, n_samples, n_features, n_classes, classes)
     output_data(reportdf,args.model,args.output_file,n_samples, n_features, n_classes)
     # return output_file (csv of report statistics of the model.)
 
