@@ -105,37 +105,46 @@ def output_params(param_filename, model_params, model):
                 paramdf.to_csv('model_params', index=False)
         else:
                 paramdf = pd.DataFrame(columns=["model", "parameters"], data = param_data)
-                paramdf.to_csv(output_filename, index=False)
+                paramdf.to_csv(param_filename, index=False)
 
 
-def label_output(model, window_size, n_samples, n_features, n_classes, class_map):
-        data_record = []
+def label_output(label_outputfile, model, window_size, n_samples, n_features, n_classes, key):
+        data_record = [model, window_size]
         samfeaclas = f"# classes: {n_classes}; # samples: {n_samples}; # features {n_features}"
-        data_record.append(model)
-        data_record.append(window_size)
         data_record.append(samfeaclas)
-        data_record.append(class_map)
+        data_record.append(key)
+        if os.path.exists(label_outputfile):
+                paramdf = pd.DataFrame(data_record)
+                paramdf.to_csv(label_outputfile, mode='a')
+        elif label_outputfile == False:
+                paramdf = pd.DataFrame(columns=["model", "window_size", "class_sample_features", "key"], data = data_record)
+                paramdf.to_csv('model_params', index=False)
+        else:
+                paramdf = pd.DataFrame(columns=["model", "window_size", "class_sample_features", "key"], data = data_record)
+                paramdf.to_csv(label_outputfile, index=False)
 
 
 def construct_key(model, window_size):
-        key = []
+        list_key = [model, window_size]
         dt_string = str(datetime.now())
         numbers = re.sub("[^0-9]", "", dt_string)
-        key.append(model)
-        key.append(window_size)
-        key.append(numbers)
+        list_key.append(numbers)
+        truekey = ''.join(list_key)
+        return truekey
 
 
 def main():
     args = arguments()
     bdict = {'s': 0, 'l': 1, 't': 2, 'c': 3, 'a': 4, 'd': 5, 'i': 6, 'w': 7}
     df = pd.read_csv("~/CNNworkspace/raterdata/dec21_cleanPennf1.csv")
+    key = construct_key(args.model, args.window_size)
     windows, classes = pull_window(df, int(args.window_size))
     Xdata, ydata = construct_xy(windows, bdict)
     n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(classes)
     X_train, X_test, y_train, y_test = reduce_dimesions(Xdata,ydata)
     report, parameters = run_a_model(args.model, Xdata, X_train, X_test, y_train, y_test, classes)
     reportdf = pd.DataFrame(report).transpose()
+    #all outputs need a key 
     output_params(args.param_output_file, parameters, args.model)
     label_output(args.model, n_samples, n_features, n_classes, classes)
     output_data(reportdf,args.model,args.output_file,n_samples, n_features, n_classes)
