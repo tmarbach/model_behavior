@@ -63,9 +63,13 @@ def construct_xy(windows):
 
 
 def svm(X_train, X_test, y_train, y_test, classes):
+    parameters = {"degrees":3, "C":5, "kernel":"poly"}
     svm_clf = Pipeline([
             ("scalar", StandardScaler()),
-            ("linear_svc", SVC(kernel="poly",degree=3,C=5)),
+            ("linear_svc", 
+            SVC(kernel=parameters["kernel"],
+                degree=parameters["degrees"],
+                C=parameters["C"])),
     ])
     svm_clf.fit(X_train, y_train)
     ypred = svm_clf.predict(X_test)
