@@ -5,7 +5,12 @@ from sklearn.metrics import classification_report
 
 
 def forester(X_train, X_test, y_train, y_test, classes):
-    rnd_clf=RandomForestClassifier(n_estimators=500,max_leaf_nodes=8, n_jobs=-1)
+    parameters = {"estimators":500,"leaf nodes":8, "jobs":-1}
+    rnd_clf=RandomForestClassifier(
+        n_estimators=parameters["estimators"],
+        max_leaf_nodes=parameters["leaf nodes"],
+        n_jobs=parameters["jobs"]
+        )
     rnd_clf.fit(X_train,y_train)
     y_pred_rf=rnd_clf.predict(X_test)
     #ytrainpred = cross_val_predict(svm_clf,X_train,y_train, cv=3)
