@@ -32,7 +32,7 @@ def pull_window(df, window_size):
     return windows, list(allclasses)
 
 
-def construct_xy(windows):
+def construct_xy(windows, classdict):
     """
     Input:
         windows -- list of dataframes of all one class 
@@ -41,20 +41,20 @@ def construct_xy(windows):
         ydata -- integer class labels for each window
     """
     positions = ['acc_x', 'acc_y', 'acc_z']
-    total_behaviors = ["s","l","t","c","a","d","i","w"]
+    # total_behaviors = ["s","l","t","c","a","d","i","w"]
     Xdata, ydata = [], []
     ### map each behavior to an integer ex: {'s': 0, 'l': 1, 't': 2, 'c': 3}
-    mapping = {}
-    for x in range(len(total_behaviors)):
-        mapping[total_behaviors[x]] = x
+    # mapping = {}
+    # for x in range(len(total_behaviors)):
+    #     mapping[total_behaviors[x]] = x
     for window in windows:
         Xdata.append(window[positions].to_numpy())
-        ydata.append(mapping[window['behavior'].iloc[0]])
+        ydata.append(classdict[window['behavior'].iloc[0]])
         
-    return np.stack(Xdata), np.asarray(ydata), mapping
+    return np.stack(Xdata), np.asarray(ydata)
 
 
-def reduce_dimesions(Xdata, ydata):
+def reduce_dimensions(Xdata, ydata):
     nsamples, nx, ny = Xdata.shape
     Xdata2d = Xdata.reshape((nsamples,nx*ny))
     X_train, X_test, y_train, y_test = train_test_split(
