@@ -62,7 +62,7 @@ def construct_xy(windows):
     return np.stack(Xdata), np.asarray(ydata)
 
 
-def svm(X_train, X_test, y_train, y_test, classes):
+def svm(X_train, X_test, y_train, y_test):
     parameters = {"degrees":3, "C":5, "kernel":"poly"}
     svm_clf = Pipeline([
             ("scalar", StandardScaler()),
@@ -76,12 +76,12 @@ def svm(X_train, X_test, y_train, y_test, classes):
     report = classification_report(
         y_test,
         ypred, 
-        target_names=classes,
         output_dict=True
         )
     parameters = svm_clf.get_params()
     # return report, parameters (dict with parameter names mapped to values)
     return report, parameters
+
 
 def main():
     df = pd.read_csv("~/CNNworkspace/raterdata/dec21_cleanPennf1.csv")

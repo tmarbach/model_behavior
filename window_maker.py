@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedShuffleSplit
 
 
 
@@ -41,12 +42,7 @@ def construct_xy(windows, classdict):
         ydata -- integer class labels for each window
     """
     positions = ['acc_x', 'acc_y', 'acc_z']
-    # total_behaviors = ["s","l","t","c","a","d","i","w"]
     Xdata, ydata = [], []
-    ### map each behavior to an integer ex: {'s': 0, 'l': 1, 't': 2, 'c': 3}
-    # mapping = {}
-    # for x in range(len(total_behaviors)):
-    #     mapping[total_behaviors[x]] = x
     for window in windows:
         Xdata.append(window[positions].to_numpy())
         ydata.append(classdict[window['behavior'].iloc[0]])
@@ -60,6 +56,18 @@ def reduce_dimensions(Xdata, ydata):
     X_train, X_test, y_train, y_test = train_test_split(
         Xdata2d, ydata, test_size=0.2, random_state=42)
     return X_train, X_test, y_train, y_test
+
+
+def reduce_dim_strat(Xdata,ydata):
+    nsamples, nx, ny = Xdata.shape
+    Xdata2d = Xdata.reshape((nsamples,nx*ny))
+    stshsp = StratifiedShuffleSplit(n_splits= 1, test_size =0.2, random_state=42)
+    train_index, test_index = next(stshsp.split(Xdata2d,ydata))
+    x_train, x_test = Xdata2d[train_index], Xdata2d[test_index]
+    y_train, y_test = ydata[train_index], ydata[test_index]
+
+    return x_train, x_test, y_train, y_test
+
 
 # def main():
 

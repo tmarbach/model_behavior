@@ -4,15 +4,15 @@ import os
 import re
 from datetime import datetime
 import argparse
-from turtle import window_height
 from rf import forester
 from window_maker import reduce_dimensions
+from window_maker import reduce_dim_strat
 from window_maker import pull_window
 from window_maker import construct_xy
 from svm import svm
 from kmeans import kmeans
 import pandas as pd
-
+import numpy as np
 
 
 def arguments():
@@ -59,10 +59,10 @@ def arguments():
 
 def run_a_model(model, Xdata, X_train, X_test, y_train, y_test, classes):
         if model == 'svm':
-                svmreport, parameter_list = svm(X_train, X_test, y_train, y_test, classes)
+                svmreport, parameter_list = svm(X_train, X_test, y_train, y_test)
                 return svmreport, parameter_list
         elif model == 'rf':
-                rfreport, parameter_list = forester(X_train, X_test, y_train, y_test, classes)
+                rfreport, parameter_list = forester(X_train, X_test, y_train, y_test)
                 return rfreport, parameter_list
         elif model == 'kmeans':
                 kmreport, parameter_list = kmeans(Xdata,classes)
@@ -148,7 +148,7 @@ def main():
     windows, classes = pull_window(df, int(args.window_size))
     Xdata, ydata = construct_xy(windows, bdict)
     n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(classes)
-    X_train, X_test, y_train, y_test = reduce_dimensions(Xdata,ydata)
+    X_train, X_test, y_train, y_test = reduce_dim_strat(Xdata,ydata)
     report, parameters = run_a_model(args.model, Xdata, X_train, X_test, y_train, y_test, classes)
     reportdf = pd.DataFrame(report).transpose()
     output_params(parameters, args.model, key, args.param_output_file)
