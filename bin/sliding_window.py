@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import MultiLabelBinarizer
 
 
 
@@ -12,7 +13,7 @@ def slide_window(df, window_size, slide: int = 1):
     windows -- list of dataframes of accel data
     allclasses -- list of the behavior classes that are present in the windows
     """
-    classes = []
+  #  classes = []
     windows = []
     number_of_rows_minus_window = df.shape[0] - window_size + 1
     if window_size > df.shape[0]:
@@ -20,10 +21,10 @@ def slide_window(df, window_size, slide: int = 1):
     for i in range(0, number_of_rows_minus_window, slide):
         window = df[i:i+window_size]
         windows.append(window)
-        classes.append(list(window.Behavior.unique().sum()))
-    allclasses = set(classes)
+#        classes.append(list(window.Behavior.unique().sum()))
+   # allclasses = set(classes)
     print("Windows pulled")
-    return windows, list(allclasses)
+    return windows
 
 
 
@@ -40,6 +41,9 @@ def construct_xy(windows, classdict):
     Xdata, ydata = [], []
     for window in windows:
         Xdata.append(window[positions].to_numpy())
-        ydata.append(classdict[window['behavior'].iloc[0]])
+        bclass = list(window.Behavior.unique().sum())
+        for yvals in bclass:
+            numlist = [classdict[yval] for yval in yvals]
+            ydata.append(numlist)
         
-    return np.stack(Xdata), np.asarray(ydata)
+    return np.stack(Xdata), MultiLabelBinarizer().fit_transform(ydata)
