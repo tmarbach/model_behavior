@@ -35,15 +35,14 @@ def construct_xy(windows, classdict):
         windows -- list of dataframes of all one class 
     Output:
         Xdata -- arrays of xyz data of each window stacked together
-        ydata -- integer class labels for each window
+        ydata -- binary multiclass labels of each class present in each window
     """
     positions = ['accX', 'accY', 'accZ']
     Xdata, ydata = [], []
     for window in windows:
         Xdata.append(window[positions].to_numpy())
         bclass = list(window.Behavior.unique().sum())
-        for yvals in bclass:
-            numlist = [classdict[yval] for yval in yvals]
-            ydata.append(numlist)
-        
+        numlist = [classdict[yval] for yval in bclass]
+        ydata.append(numlist)
     return np.stack(Xdata), MultiLabelBinarizer().fit_transform(ydata)
+​
