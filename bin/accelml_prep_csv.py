@@ -57,8 +57,6 @@ def output_prepped_data(original_data, clean_csv_df):
 
 
 
-
-
 def main(input_csv):
     clean_data = accel_data_csv_cleaner(input_csv)    
     output_prepped_data(input_csv, clean_data)

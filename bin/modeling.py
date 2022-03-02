@@ -153,33 +153,34 @@ def construct_key(model, window_size):
 
 
 def class_identifier(df, c_o_i):
-    class_labels = []
     blist = list(df.behavior.unique().sum())
-    if len(c_o_i) == len(blist):
-        class_labels = blist
-    class_labels = ["all other classes", oneclass for oneclass in c_o_i]
     bdict = {x: 0 for x in blist}
     count = 0
     for bclass in c_o_i:
         count +=1
         bdict[bclass] = count
-    return bdict, class_labels
+    return bdict
 
 
 def main():
     args = arguments()
-    df = accel_data_csv_cleaner(args.raw_accel_csv)
-    output_prepped_data(args.raw_accel_csv,df)
+    #rough draft of allowing "prepped" data to bypass cleaning
+    if "prepped_" in os.path.basename(args.raw_accel_csv):
+        df = pd.read_csv(args.raw_accel_csv)
+    else:
+        df = accel_data_csv_cleaner(args.raw_accel_csv)
+        output_prepped_data(args.raw_accel_csv,df)
 #TODO: allow for multiple csv inputs, allow for "prepped_" data to be input and 
     # bypass the cleaning phase. 
+    #check if the output prepped csv already exists
     df = df.rename(columns={'Behavior':'behavior'})
     key = construct_key(args.model, args.window_size)
-    classdict, class_labels = class_identifier(df, list(args.classes_of_interest))
+    classdict = class_identifier(df, list(args.classes_of_interest))
     windows = leaping_window(df, int(args.window_size))
     Xdata, ydata = construct_xy(windows, classdict)
     n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(classdict)
     X_train, X_test, y_train, y_test = reduce_dim_strat(Xdata,ydata)
-    report, parameters = forester(X_train, X_test, y_train, y_test, (len(args.classes_of_interest) + 1), class_labels)
+    report, parameters = forester(X_train, X_test, y_train, y_test, (len(args.classes_of_interest) + 1))
     reportdf = pd.DataFrame(report).transpose()
     output_params(parameters, args.model, key, args.param_output_file)
     label_output(
