@@ -78,5 +78,5 @@ def reduce_dim_strat(Xdata,ydata):
     train_index, test_index = next(stshsp.split(Xdata2d,ydata))
     x_train, x_test = Xdata2d[train_index], Xdata2d[test_index]
     y_train, y_test = ydata[train_index], ydata[test_index]
-
+    print("train/test sets stratified and split")
     return x_train, x_test, y_train, y_test
