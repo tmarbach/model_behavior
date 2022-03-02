@@ -22,7 +22,8 @@ def arguments():
             epilog=""
                  ) 
     parser.add_argument(
-            "raw-accel-csv",
+            "-i",
+            "--raw-accel-csv",
             type=str,
             help = "input the path to the csv file of accelerometer data that requires cleaning")
     parser.add_argument(
@@ -143,7 +144,7 @@ def label_output(model, window_size, n_samples, n_features, n_classes, key, labe
 
 
 def construct_key(model, window_size):
-    list_key = ['mar1',model, str(window_size)]
+    list_key = ['raw',model, str(window_size)]
     dt_string = str(datetime.now())
     numbers = re.sub("[^0-9]", "", dt_string)
     list_key.append(numbers)
@@ -152,29 +153,33 @@ def construct_key(model, window_size):
 
 
 def class_identifier(df, c_o_i):
+    class_labels = []
     blist = list(df.behavior.unique().sum())
+    if len(c_o_i) == len(blist):
+        class_labels = blist
+    class_labels = ["all other classes", oneclass for oneclass in c_o_i]
     bdict = {x: 0 for x in blist}
     count = 0
     for bclass in c_o_i:
         count +=1
         bdict[bclass] = count
-    return bdict
+    return bdict, class_labels
 
 
 def main():
     args = arguments()
-    df = accel_data_csv_cleaner(args.raw-accel-csv)
-    output_prepped_data(args.raw-accel-csv,df)
+    df = accel_data_csv_cleaner(args.raw_accel_csv)
+    output_prepped_data(args.raw_accel_csv,df)
 #TODO: allow for multiple csv inputs, allow for "prepped_" data to be input and 
     # bypass the cleaning phase. 
     df = df.rename(columns={'Behavior':'behavior'})
     key = construct_key(args.model, args.window_size)
-    classdict = class_identifier(df, args.classes_of_interest)
+    classdict, class_labels = class_identifier(df, list(args.classes_of_interest))
     windows = leaping_window(df, int(args.window_size))
     Xdata, ydata = construct_xy(windows, classdict)
     n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(classdict)
     X_train, X_test, y_train, y_test = reduce_dim_strat(Xdata,ydata)
-    report, parameters = forester(X_train, X_test, y_train, y_test, (len(args.classes_of_interest) + 1))
+    report, parameters = forester(X_train, X_test, y_train, y_test, (len(args.classes_of_interest) + 1), class_labels)
     reportdf = pd.DataFrame(report).transpose()
     output_params(parameters, args.model, key, args.param_output_file)
     label_output(
