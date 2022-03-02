@@ -6,7 +6,7 @@ from datetime import datetime
 import argparse
 from rf import forester
 from sliding_window import leaping_window
-from window_maker import reduce_dim_strat
+from sliding_window import reduce_dim_strat
 from sliding_window import construct_xy
 import pandas as pd
 import numpy as np
@@ -146,10 +146,12 @@ def construct_key(model, window_size):
 
 
 def class_identifier(df, c_o_i):
-    blist = list(df.Behavior.unique.sum())
+    blist = list(df.behavior.unique().sum())
     bdict = {x: 0 for x in blist}
+    count = 0
     for bclass in c_o_i:
-        bdict[bclass] = 1
+        count +=1
+        bdict[bclass] = count
     return bdict
 
 
@@ -158,12 +160,12 @@ def main():
     df = pd.read_csv("~/CNNworkspace/total_clean_data.csv")
     df = df.rename(columns={'Behavior':'behavior'})
     key = construct_key(args.model, args.window_size)
-    classdict = class_identifier(df, args.class_of_interest)
-    windows, classes = leaping_window(df, int(args.window_size))
+    classdict = class_identifier(df, args.classes_of_interest)
+    windows = leaping_window(df, int(args.window_size))
     Xdata, ydata = construct_xy(windows, classdict)
-    n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(classes)
+    n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(classdict)
     X_train, X_test, y_train, y_test = reduce_dim_strat(Xdata,ydata)
-    report, parameters = forester(X_train, X_test, y_train, y_test, n_classes)
+    report, parameters = forester(X_train, X_test, y_train, y_test, (len(args.classes-of-interest) + 1))
     reportdf = pd.DataFrame(report).transpose()
     output_params(parameters, args.model, key, args.param_output_file)
     label_output(
