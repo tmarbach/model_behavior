@@ -4,6 +4,8 @@ import os
 import re
 from datetime import datetime
 import argparse
+from accelml_prep_csv import accel_data_csv_cleaner 
+from accelml_prep_csv import output_prepped_data
 from rf import forester
 from sliding_window import leaping_window
 from sliding_window import reduce_dim_strat
@@ -18,7 +20,11 @@ def arguments():
             prog='model_select', 
             description="Select a ML model to apply to acceleration data",
             epilog=""
-                 )
+                 ) 
+    parser.add_argument(
+            "raw-accel-csv",
+            type=str,
+            help = "input the path to the csv file of accelerometer data that requires cleaning")
     parser.add_argument(
             "-m",
             "--model",
@@ -157,7 +163,10 @@ def class_identifier(df, c_o_i):
 
 def main():
     args = arguments()
-    df = pd.read_csv("~/CNNworkspace/total_clean_data.csv")
+    df = accel_data_csv_cleaner(args.raw-accel-csv)
+    output_prepped_data(args.raw-accel-csv,df)
+#TODO: allow for multiple csv inputs, allow for "prepped_" data to be input and 
+    # bypass the cleaning phase. 
     df = df.rename(columns={'Behavior':'behavior'})
     key = construct_key(args.model, args.window_size)
     classdict = class_identifier(df, args.classes_of_interest)
@@ -165,7 +174,7 @@ def main():
     Xdata, ydata = construct_xy(windows, classdict)
     n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(classdict)
     X_train, X_test, y_train, y_test = reduce_dim_strat(Xdata,ydata)
-    report, parameters = forester(X_train, X_test, y_train, y_test, (len(args.classes-of-interest) + 1))
+    report, parameters = forester(X_train, X_test, y_train, y_test, (len(args.classes_of_interest) + 1))
     reportdf = pd.DataFrame(report).transpose()
     output_params(parameters, args.model, key, args.param_output_file)
     label_output(
