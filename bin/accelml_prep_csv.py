@@ -8,6 +8,8 @@ import pandas as pd
 
 def accel_data_csv_cleaner(accel_data_csv):
     df = pd.read_csv(accel_data_csv)
+    if 'Behavior' not in df.columns:
+        raise ValueError("'Behavior' column is missing")
     df['input_index'] = df.index
     cols_at_front = ['Behavior',
                      'accX', 
