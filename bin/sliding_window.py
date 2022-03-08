@@ -2,6 +2,38 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import train_test_split
+from imblearn.over_sampling import RandomOverSampler
+
+
+
+def pull_window(df, window_size):
+    """
+    Input: 
+    df -- dataframe of cleaned input data, likely from a csv
+    window_size -- number of rows of data to convert to 1 row for AcceleRater (25 = 1sec)
+    Output:
+    windows -- list of lists of accel data (EX:[x,y,z,...,x,y,z,class_label])
+    allclasses -- list of the behavior classes that are present in the windows
+    """
+   # classes = []
+    windows = []
+    number_of_rows_minus_window = df.shape[0] - window_size + 1
+    if window_size > df.shape[0]:
+        raise ValueError('Window larger than data given')
+    for i in range(0, number_of_rows_minus_window, 1):
+        window = df[i:i+window_size]
+        if len(set(window.behavior)) != 1:
+            continue
+        if len(set(np.ediff1d(window.input_index))) != 1:
+            continue
+        # if window.iloc[0]['behavior'] not in class_list:
+        #     continue
+        windows.append(window)
+        #classes.append(window.iloc[0]['behavior'])
+    #allclasses = set(classes)
+    print("Windows pulled")
+    return windows#, list(allclasses)
 
 
 
@@ -53,7 +85,9 @@ def leaping_window(df, window_size):
 
 
 
-def construct_xy(windows, classdict):
+
+#multiclass labeling each windows
+def multilabel_xy(windows, classdict):
     """
     Input:
         windows -- list of dataframes of all one class 
@@ -71,6 +105,24 @@ def construct_xy(windows, classdict):
     return np.stack(Xdata), MultiLabelBinarizer().fit_transform(ydata)
 
 
+#single class labeling each window
+def singlelabel_xy(windows, classdict):
+    """
+    Input:
+        windows -- list of dataframes of all one class 
+    Output:
+        Xdata -- arrays of xyz data of each window stacked together
+        ydata -- integer class labels for each window
+    """
+    positions = ['accX', 'accY', 'accZ']
+    Xdata, ydata = [], []
+    for window in windows:
+        Xdata.append(window[positions].to_numpy())
+        ydata.append(classdict[window['behavior'].iloc[0]])
+    return np.stack(Xdata), np.asarray(ydata)
+
+
+#stratified random sample of training data
 def reduce_dim_strat(Xdata,ydata):
     nsamples, nx, ny = Xdata.shape
     Xdata2d = Xdata.reshape((nsamples,nx*ny))
@@ -80,3 +132,41 @@ def reduce_dim_strat(Xdata,ydata):
     y_train, y_test = ydata[train_index], ydata[test_index]
     print("train/test sets stratified and split")
     return x_train, x_test, y_train, y_test
+
+
+#random sample of training data
+def reduce_dimensions(Xdata, ydata):
+    nsamples, nx, ny = Xdata.shape
+    Xdata2d = Xdata.reshape((nsamples,nx*ny))
+    X_train, X_test, y_train, y_test = train_test_split(
+        Xdata2d, ydata, test_size=0.2, random_state=42)
+    return X_train, X_test, y_train, y_test
+
+
+def reduce_dim_strat_over(Xdata,ydata):
+    """
+    Reduces the dimensions of inout data, splits into train/test set,
+    then randomly oversamples the minority classes to match the majority class"""
+    nsamples, nx, ny = Xdata.shape
+    Xdata2d = Xdata.reshape((nsamples,nx*ny))
+    stshsp = StratifiedShuffleSplit(n_splits= 1, test_size =0.2, random_state=42)
+    train_index, test_index = next(stshsp.split(Xdata2d,ydata))
+    x_train, x_test = Xdata2d[train_index], Xdata2d[test_index]
+    y_train, y_test = ydata[train_index], ydata[test_index]
+    ros = RandomOverSampler(random_state=0)
+    X_resampled, y_resampled = ros.fit_resample(x_train, y_train)
+    print("train/test sets stratified and split")
+    return X_resampled, x_test, y_resampled, y_test
+
+
+def main():
+    pull_window(df, window_size)
+    slide_window(df, window_size)
+    leaping_window(df, window_size)
+    singlelabel_xy(windows, classdict)
+    multilabel_xy(windows, classdict)
+    reduce_dim_strat(Xdata,ydata)
+    reduce_dimensions(Xdata,ydata)
+
+if __name__ == "__main__":
+    main()

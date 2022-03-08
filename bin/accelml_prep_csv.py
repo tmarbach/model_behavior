@@ -2,29 +2,7 @@
 
 import os
 import pandas as pd
-#import argparse
 
-
-
-# def arguments():
-#     parser = argparse.ArgumentParser(
-#             prog='accelml_prep_csv', 
-#             description="Clean and prepare accelerometer csv data for CNN input by rounding\
-#                         to 3 decimal places and removing blank timestamps",\
-#             epilog="Columns of accelerometer data must be arranged:'tag_id', 'date', 'time',\
-#                     'camera_date', 'camera_time', 'behavior', 'acc_x', 'acc_y', 'acc_z', 'temp_c',\
-#                     'battery_voltage', 'metadata'"
-#                  )
-#     parser.add_argument(
-#             "csv_file",
-#             type=str,
-#             help = "input the path to the csv file of accelerometer data that requires cleaning")
-#     parser.add_argument(
-#             "-o",
-#             "--output",
-#             help="Directs the output to a name of your choice",
-#             default=False)
-#     return parser.parse_args()
 
 
 
@@ -39,13 +17,13 @@ def accel_data_csv_cleaner(accel_data_csv):
             [c for c in df if c not in cols_at_front]]
                    # check for correct number of columns, then check for correct column titles
     # need to check if the first 1 or 2 time signatures (sampling) have 25 entries, if not, kick an error
-    df['Behavior'] = df['Behavior'].fillna('u')
-    df['Behavior'] = df['Behavior'].replace(['n'],'u')
-    #df= df.dropna(subset=['Behavior'])
-    #df = df.loc[df['Behavior'] != 'n']
+    #df['Behavior'] = df['Behavior'].fillna('u')
+    #df['Behavior'] = df['Behavior'].replace(['n'],'u')
+    df= df.dropna(subset=['Behavior'])
+    df = df.loc[df['Behavior'] != 'n']
     
-    df = df.loc[df['Behavior'] != 'h']
-    #CURRENTLY removing handling class, makes no sense to train with it.
+    #CURRENTLY removing "no video class" class
+    #SET to removing unlabeled data and no video data. keeping labeled class data
     return df
 
 

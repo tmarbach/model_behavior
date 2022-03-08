@@ -7,9 +7,12 @@ import argparse
 from accelml_prep_csv import accel_data_csv_cleaner 
 from accelml_prep_csv import output_prepped_data
 from rf import forester
-from sliding_window import leaping_window
+from sliding_window import pull_window
+from sliding_window import slide_window
+from sliding_window import reduce_dim_strat_over
 from sliding_window import reduce_dim_strat
-from sliding_window import construct_xy
+from sliding_window import multilabel_xy
+from sliding_window import singlelabel_xy
 import pandas as pd
 import numpy as np
 
@@ -29,9 +32,21 @@ def arguments():
     parser.add_argument(
             "-m",
             "--model",
-            help = "Choose a ML model of: svm, rf, or kmeans",
+            help = "Choose a ML model of: only rf for now",
             default=False, 
             type=str
+            )
+    parser.add_argument(
+            "-s",
+            "--slide-window",
+            help = "Flag to implement a sliding window, default is a leaping window",
+            action="store_true", 
+            )
+    parser.add_argument(
+            "-o",
+            "--oversample",
+            help = "Flag to oversample the minority classes. Only affects training data, not testing data.",
+            action="store_true", 
             )
     parser.add_argument(
             "-w",
@@ -144,7 +159,7 @@ def label_output(model, window_size, n_samples, n_features, n_classes, key, labe
 
 
 def construct_key(model, window_size):
-    list_key = ['raw',model, str(window_size)]
+    list_key = ['ovr',model, str(window_size)]
     dt_string = str(datetime.now())
     numbers = re.sub("[^0-9]", "", dt_string)
     list_key.append(numbers)
@@ -153,16 +168,26 @@ def construct_key(model, window_size):
 
 
 def class_identifier(df, c_o_i):
-    blist = list(df.behavior.unique().sum())
-    bdict = {x: 0 for x in blist}
-    count = 0
-    for bclass in c_o_i:
-        count +=1
-        bdict[bclass] = count
+    if c_o_i == False:
+        bdict = dict(zip(list(df.behavior.unique().sum()), range(1, len(c_o_i)+1)))
+    else:
+        blist = list(df.behavior.unique().sum())
+        bdict = {x: 0 for x in blist}
+        count = 0
+        for bclass in c_o_i:
+            count +=1
+            bdict[bclass] = count
     return bdict
 
 
+#TODO: add sliding/leaping flag, CHECK
+# add oversample flag, CHECK
+# add option for multi-run with diff window sizes, 
+# add default all classes for no coi flag CHECK
+# add way to record options selected
+
 def main():
+    # full behavior list = 'tcadiwhslzrm'
     args = arguments()
     #rough draft of allowing "prepped" data to bypass cleaning
     if "prepped_" in os.path.basename(args.raw_accel_csv):
@@ -170,16 +195,21 @@ def main():
     else:
         df = accel_data_csv_cleaner(args.raw_accel_csv)
         output_prepped_data(args.raw_accel_csv,df)
-#TODO: allow for multiple csv inputs, allow for "prepped_" data to be input and 
-    # bypass the cleaning phase. 
+#TODO: allow for multiple csv inputs, 
     #check if the output prepped csv already exists
     df = df.rename(columns={'Behavior':'behavior'})
     key = construct_key(args.model, args.window_size)
     classdict = class_identifier(df, list(args.classes_of_interest))
-    windows = leaping_window(df, int(args.window_size))
-    Xdata, ydata = construct_xy(windows, classdict)
+    if args.slide_window:
+        windows = slide_window(df, int(args.window_size))
+    else:
+        windows = pull_window(df, int(args.window_size))
+    Xdata, ydata = singlelabel_xy(windows, classdict)
     n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(classdict)
-    X_train, X_test, y_train, y_test = reduce_dim_strat(Xdata,ydata)
+    if args.oversample:
+        X_train, X_test, y_train, y_test = reduce_dim_strat_over(Xdata,ydata)
+    else:
+        X_train, X_test, y_train, y_test = reduce_dim_strat(Xdata,ydata)
     report, parameters = forester(X_train, X_test, y_train, y_test, (len(args.classes_of_interest) + 1))
     reportdf = pd.DataFrame(report).transpose()
     output_params(parameters, args.model, key, args.param_output_file)
