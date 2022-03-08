@@ -5,6 +5,7 @@ import re
 from datetime import datetime
 import argparse
 from accelml_prep_csv import accel_data_csv_cleaner 
+from accelml_prep_csv import accel_data_dir_cleaner 
 from accelml_prep_csv import output_prepped_data
 from rf import forester
 from sliding_window import pull_window
@@ -180,23 +181,26 @@ def class_identifier(df, c_o_i):
     return bdict
 
 
-#TODO: add sliding/leaping flag, CHECK
-# add oversample flag, CHECK
+#TODO: 
 # add option for multi-run with diff window sizes, 
-# add default all classes for no coi flag CHECK
+#for size in sizes:
+
 # add way to record options selected
+# allow for multiple csv inputs, 
+    #check if the output prepped csv already exists
 
 def main():
     # full behavior list = 'tcadiwhslzrm'
     args = arguments()
     #rough draft of allowing "prepped" data to bypass cleaning
-    if "prepped_" in os.path.basename(args.raw_accel_csv):
+    if args.raw_accel_csv.endswith('/'):
+        df = accel_data_dir_cleaner(args.raw_accel_csv)
+    elif "prepped_" in os.path.basename(args.raw_accel_csv):
         df = pd.read_csv(args.raw_accel_csv)
     else:
         df = accel_data_csv_cleaner(args.raw_accel_csv)
         output_prepped_data(args.raw_accel_csv,df)
-#TODO: allow for multiple csv inputs, 
-    #check if the output prepped csv already exists
+
     df = df.rename(columns={'Behavior':'behavior'})
     key = construct_key(args.model, args.window_size)
     classdict = class_identifier(df, list(args.classes_of_interest))
@@ -204,14 +208,17 @@ def main():
         windows = slide_window(df, int(args.window_size))
     else:
         windows = pull_window(df, int(args.window_size))
+
     Xdata, ydata = singlelabel_xy(windows, classdict)
     n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(classdict)
     if args.oversample:
         X_train, X_test, y_train, y_test = reduce_dim_strat_over(Xdata,ydata)
     else:
         X_train, X_test, y_train, y_test = reduce_dim_strat(Xdata,ydata)
+
     report, parameters = forester(X_train, X_test, y_train, y_test, (len(args.classes_of_interest) + 1))
     reportdf = pd.DataFrame(report).transpose()
+    # keep report output the same for key recording. 
     output_params(parameters, args.model, key, args.param_output_file)
     label_output(
                 args.model,

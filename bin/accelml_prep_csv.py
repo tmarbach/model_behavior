@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+from re import fullmatch
 import pandas as pd
 
 
@@ -30,6 +31,35 @@ def accel_data_csv_cleaner(accel_data_csv):
     df= df.dropna(subset=['Behavior'])
     df = df.loc[df['Behavior'] != 'n']
     
+    #CURRENTLY removing "no video class" class
+    #SET to removing unlabeled data and no video data. keeping labeled class data
+    return df
+
+
+def accel_data_dir_cleaner(accel_data_csv):
+    files = [f for f in os.listdir(accel_data_csv) if f.endswith('.csv')]
+    fulldf = []
+    for csv in files:
+        adf = pd.read_csv(csv, low_memory=False)
+        if 'Behavior' not in adf.columns:
+            raise ValueError("'Behavior' column is missing")
+        if 'accX' not in adf.columns:
+            raise ValueError("'accX' column is missing")
+        if 'accY' not in adf.columns:
+            raise ValueError("'accY' column is missing")
+        if 'accZ' not in adf.columns:
+            raise ValueError("'accZ' column is missing")
+        fulldf.append(adf)
+    df = pd.concat(fulldf)    
+    df['input_index'] = df.index
+    cols_at_front = ['Behavior',
+                     'accX', 
+                     'accY', 
+                     'accZ']
+    df = df[[c for c in cols_at_front if c in df]+
+            [c for c in df if c not in cols_at_front]]
+    df= df.dropna(subset=['Behavior'])
+    df = df.loc[df['Behavior'] != 'n']
     #CURRENTLY removing "no video class" class
     #SET to removing unlabeled data and no video data. keeping labeled class data
     return df
