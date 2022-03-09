@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import train_test_split
-from imblearn.over_sampling import RandomOverSampler
+from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
 
 
 
@@ -157,6 +157,32 @@ def reduce_dim_strat_over(Xdata,ydata):
     X_resampled, y_resampled = ros.fit_resample(x_train, y_train)
     print("train/test sets stratified and split")
     return X_resampled, x_test, y_resampled, y_test
+
+
+
+def reduce_dim_sampler(Xdata,ydata, sample_flag = False):
+    """
+    Reduces the dimensions of inout data, splits into train/test set,
+    then randomly oversamples the minority classes to match the majority class"""
+    nsamples, nx, ny = Xdata.shape
+    Xdata2d = Xdata.reshape((nsamples,nx*ny))
+    stshsp = StratifiedShuffleSplit(n_splits= 1, test_size =0.2, random_state=42)
+    train_index, test_index = next(stshsp.split(Xdata2d,ydata))
+    x_train, x_test = Xdata2d[train_index], Xdata2d[test_index]
+    y_train, y_test = ydata[train_index], ydata[test_index]
+    if sample_flag == 'o':
+        ros = RandomOverSampler(random_state=0)
+        X_resampled, y_resampled = ros.fit_resample(x_train, y_train)
+    elif sample_flag == 's':
+        X_resampled, y_resampled = SMOTE().fit_resample(x_train, y_train)
+    elif sample_flag == 'a':
+        X_resampled, y_resampled = ADASYN().fit_resample(x_train, y_train)
+    else:
+        X_resampled, y_resampled = x_train, y_train
+    print("train/test sets stratified and split")
+    return X_resampled, x_test, y_resampled, y_test
+
+
 
 
 def main():

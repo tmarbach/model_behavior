@@ -29,7 +29,8 @@ def arguments():
             "-i",
             "--raw-accel-csv",
             type=str,
-            help = "input the path to the csv file of accelerometer data that requires cleaning")
+            help = "input the path to the csv file of accelerometer data that requires cleaning"
+            )
     parser.add_argument(
             "-m",
             "--model",
@@ -178,10 +179,15 @@ def class_identifier(df, c_o_i):
         for bclass in c_o_i:
             count +=1
             bdict[bclass] = count
+            #reduction in class #
+            #fourclass = {'s': 0, 'l': 1, 't': 2, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':3, 'z':3, 'h':2, 'm':2}
+            #sixclass = {'s': 0, 'l': 1, 't': 5, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':4, 'z':4, 'h':2, 'm':2}
     return bdict
 
 
 #TODO: 
+# tf = ag strike, hm = def strike, lc = motion, rz = rattling, adiw=feeding
+# rzadiw = inplace-moving lc =motion tfhm = striking
 # add option for multi-run with diff window sizes, 
 #for size in sizes:
 
@@ -204,7 +210,8 @@ def main():
 
     df = df.rename(columns={'Behavior':'behavior'})
     key = construct_key(args.model, args.window_size)
-    classdict = class_identifier(df, list(args.classes_of_interest))
+    #classdict = class_identifier(df, list(args.classes_of_interest))
+    classdict = {'s': 0, 'l': 1, 't': 5, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':4, 'z':4, 'h':2, 'm':2} #6class
     if args.slide_window:
         windows = slide_window(df, int(args.window_size))
     else:
