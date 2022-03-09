@@ -188,6 +188,7 @@ def class_identifier(df, c_o_i):
 # add way to record options selected
 # allow for multiple csv inputs, 
     #check if the output prepped csv already exists
+# have code pull proper combo of sliding/leaping and xy construction
 
 def main():
     # full behavior list = 'tcadiwhslzrm'

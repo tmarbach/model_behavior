@@ -21,7 +21,7 @@ def pull_window(df, window_size):
     number_of_rows_minus_window = df.shape[0] - window_size + 1
     if window_size > df.shape[0]:
         raise ValueError('Window larger than data given')
-    for i in range(0, number_of_rows_minus_window, 1):
+    for i in range(0, number_of_rows_minus_window, window_size):
         window = df[i:i+window_size]
         if len(set(window.behavior)) != 1:
             continue
@@ -86,7 +86,7 @@ def leaping_window(df, window_size):
 
 
 
-#multiclass labeling each windows
+#multiclass labeling each windows, used with either sliding/leaping windows
 def multilabel_xy(windows, classdict):
     """
     Input:
@@ -105,7 +105,7 @@ def multilabel_xy(windows, classdict):
     return np.stack(Xdata), MultiLabelBinarizer().fit_transform(ydata)
 
 
-#single class labeling each window
+#single class labeling each window, use with pull windows
 def singlelabel_xy(windows, classdict):
     """
     Input:
