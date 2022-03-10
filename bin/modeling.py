@@ -4,12 +4,14 @@ import os
 import re
 from datetime import datetime
 import argparse
+import seaborn as sns
+import matplotlib.pyplot as plt
 from accelml_prep_csv import accel_data_csv_cleaner 
 from accelml_prep_csv import accel_data_dir_cleaner 
 from accelml_prep_csv import output_prepped_data
 from rf import forester
 from sliding_window import pull_window
-from sliding_window import slide_window
+from sliding_window import slide_window, reduce_dim_sampler
 from sliding_window import reduce_dim_strat_over
 from sliding_window import reduce_dim_strat
 from sliding_window import multilabel_xy
@@ -47,8 +49,9 @@ def arguments():
     parser.add_argument(
             "-o",
             "--oversample",
-            help = "Flag to oversample the minority classes. Only affects training data, not testing data.",
-            action="store_true", 
+            help = "Flag to oversample the minority classes: o -- oversample, s -- SMOTE, or a -- ADASYN ",
+            default=False, 
+            type=str 
             )
     parser.add_argument(
             "-w",
@@ -161,7 +164,7 @@ def label_output(model, window_size, n_samples, n_features, n_classes, key, labe
 
 
 def construct_key(model, window_size):
-    list_key = ['ovr',model, str(window_size)]
+    list_key = ['tcadiwhslzrm',model, str(window_size)]
     dt_string = str(datetime.now())
     numbers = re.sub("[^0-9]", "", dt_string)
     list_key.append(numbers)
@@ -171,21 +174,22 @@ def construct_key(model, window_size):
 
 def class_identifier(df, c_o_i):
     if c_o_i == False:
-        bdict = dict(zip(list(df.behavior.unique().sum()), range(1, len(c_o_i)+1)))
+        bdict = dict(zip(list(df.behavior.unique().sum()), range(1, len(list(df.behavior.unique().sum()))+1)))
+        coi_list = list(bdict.keys())
     else:
         blist = list(df.behavior.unique().sum())
+        coi_list = ['other classes'] + [bclass for bclass in c_o_i]
         bdict = {x: 0 for x in blist}
         count = 0
         for bclass in c_o_i:
             count +=1
             bdict[bclass] = count
-            #reduction in class #
-            #fourclass = {'s': 0, 'l': 1, 't': 2, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':3, 'z':3, 'h':2, 'm':2}
-            #sixclass = {'s': 0, 'l': 1, 't': 5, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':4, 'z':4, 'h':2, 'm':2}
-    return bdict
+           
+    return bdict, coi_list
 
 
-#TODO: 
+#TODO:
+# change flag to one outputfile prefix
 # tf = ag strike, hm = def strike, lc = motion, rz = rattling, adiw=feeding
 # rzadiw = inplace-moving lc =motion tfhm = striking
 # add option for multi-run with diff window sizes, 
@@ -210,21 +214,25 @@ def main():
 
     df = df.rename(columns={'Behavior':'behavior'})
     key = construct_key(args.model, args.window_size)
-    #classdict = class_identifier(df, list(args.classes_of_interest))
-    classdict = {'s': 0, 'l': 1, 't': 5, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':4, 'z':4, 'h':2, 'm':2} #6class
+    #coi_list = list(args.classes_of_interest)
+    classdict, presentclasses = class_identifier(df, args.classes_of_interest)
+    # if len(coi_list) < 12:
+    #     presentclasses = ['all other classes'] + coi_list
+    # else:
+    #     presentclasses = coi_list
+    #classdict = {'s': 0, 'l': 1, 't': 5, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':4, 'z':4, 'h':2, 'm':2} #6class
+    #classdict = {'s': 0, 'l': 1, 't': 2, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':3, 'z':3, 'h':2, 'm':2} #4class
     if args.slide_window:
         windows = slide_window(df, int(args.window_size))
     else:
         windows = pull_window(df, int(args.window_size))
 
     Xdata, ydata = singlelabel_xy(windows, classdict)
-    n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(classdict)
-    if args.oversample:
-        X_train, X_test, y_train, y_test = reduce_dim_strat_over(Xdata,ydata)
-    else:
-        X_train, X_test, y_train, y_test = reduce_dim_strat(Xdata,ydata)
-
-    report, parameters = forester(X_train, X_test, y_train, y_test, (len(args.classes_of_interest) + 1))
+    n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(presentclasses)
+    X_train, X_test, y_train, y_test = reduce_dim_sampler(Xdata,ydata, args.oversample)
+    # else:
+    #     X_train, X_test, y_train, y_test = reduce_dim_strat(Xdata,ydata)
+    report, parameters = forester(X_train, X_test, y_train, y_test, len(presentclasses), presentclasses)
     reportdf = pd.DataFrame(report).transpose()
     # keep report output the same for key recording. 
     output_params(parameters, args.model, key, args.param_output_file)
@@ -238,7 +246,9 @@ def main():
                 args.label_output_file
                 )
     output_data(reportdf,args.model, key, args.data_output_file)
-
+    sns.heatmap(pd.DataFrame(report).iloc[:-1, :].T, annot=True)
+    plt.savefig('2_class25-noover.png')
+    plt.close
 
 if __name__ == "__main__":
     main()

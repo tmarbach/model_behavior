@@ -2,7 +2,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 
 
-def forester(X_train, X_test, y_train, y_test, n_classes):
+def forester(X_train, X_test, y_train, y_test, n_classes, classnames):
     #parameters = {"estimators":1000,"leaf nodes":n_classes, "jobs":-1}
     rnd_clf=RandomForestClassifier(
         n_estimators=1000,
@@ -14,6 +14,7 @@ def forester(X_train, X_test, y_train, y_test, n_classes):
     report = classification_report(
         y_test,
         y_pred_rf, 
+        target_names = classnames,
         output_dict=True
         )
     parameters = rnd_clf.get_params()
