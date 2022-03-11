@@ -1,5 +1,5 @@
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 
 
 def forester(X_train, X_test, y_train, y_test, n_classes, classnames):
@@ -17,8 +17,13 @@ def forester(X_train, X_test, y_train, y_test, n_classes, classnames):
         target_names = classnames,
         output_dict=True
         )
+    matrix = confusion_matrix(
+        y_test,
+        y_pred_rf
+        #labels=classnames
+         )
     parameters = rnd_clf.get_params()
-    return report, parameters
+    return report, matrix, parameters
 
 
 if __name__=="__main__":

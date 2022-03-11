@@ -176,7 +176,7 @@ def reduce_dim_sampler(Xdata,ydata, sample_flag = False):
     elif sample_flag == 's':
         X_resampled, y_resampled = SMOTE().fit_resample(x_train, y_train)
     elif sample_flag == 'a':
-        X_resampled, y_resampled = ADASYN().fit_resample(x_train, y_train)
+        X_resampled, y_resampled = ADASYN(n_neighbors=2).fit_resample(x_train, y_train)
     else:
         X_resampled, y_resampled = x_train, y_train
     print("train/test sets stratified and split")

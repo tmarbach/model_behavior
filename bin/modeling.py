@@ -164,7 +164,7 @@ def label_output(model, window_size, n_samples, n_features, n_classes, key, labe
 
 
 def construct_key(model, window_size):
-    list_key = ['tcadiwhslzrm',model, str(window_size)]
+    list_key = [str(window_size), model]
     dt_string = str(datetime.now())
     numbers = re.sub("[^0-9]", "", dt_string)
     list_key.append(numbers)
@@ -178,7 +178,7 @@ def class_identifier(df, c_o_i):
         coi_list = list(bdict.keys())
     else:
         blist = list(df.behavior.unique().sum())
-        coi_list = ['other classes'] + [bclass for bclass in c_o_i]
+        coi_list = ['other-classes'] + [bclass for bclass in c_o_i]
         bdict = {x: 0 for x in blist}
         count = 0
         for bclass in c_o_i:
@@ -214,13 +214,13 @@ def main():
 
     df = df.rename(columns={'Behavior':'behavior'})
     key = construct_key(args.model, args.window_size)
-    #coi_list = list(args.classes_of_interest)
-    classdict, presentclasses = class_identifier(df, args.classes_of_interest)
-    # if len(coi_list) < 12:
-    #     presentclasses = ['all other classes'] + coi_list
-    # else:
-    #     presentclasses = coi_list
-    #classdict = {'s': 0, 'l': 1, 't': 5, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':4, 'z':4, 'h':2, 'm':2} #6class
+    #classdict, presentclasses = class_identifier(df, args.classes_of_interest)
+    #classdict = {'s': 0, 'l': 1, 'c': 1, 'h':2, 'm':3, 'a': 4, 'd': 5, 'i': 6, 'w': 7, 'r':8, 'z':9, 't': 10} # l&c combined
+   # presentclasses = ['s', 'l&c', 'h', 'm', 'a', 'd', 'i', 'w', 'r', 'z', 't']
+    # classdict = {'s': 0, 'l': 1, 't': 5, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':4, 'z':4, 'h':2, 'm':2} #6class
+    # presentclasses = ['s', 'l&c', 'def_strike', 'feeding', 'rattle', 'agg_strike']
+    classdict = {'s': 0, 'l': 1, 'c': 1, 'h':2, 'm':2, 'a': 3, 'd': 4, 'i': 5, 'w': 6, 'r':7, 'z':7, 't': 8} # 9class
+    presentclasses = ['s', 'l&c', 'def_strike', 'a', 'd', 'i', 'w', 'rattle', 'agg_strike']
     #classdict = {'s': 0, 'l': 1, 't': 2, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':3, 'z':3, 'h':2, 'm':2} #4class
     if args.slide_window:
         windows = slide_window(df, int(args.window_size))
@@ -230,9 +230,7 @@ def main():
     Xdata, ydata = singlelabel_xy(windows, classdict)
     n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(presentclasses)
     X_train, X_test, y_train, y_test = reduce_dim_sampler(Xdata,ydata, args.oversample)
-    # else:
-    #     X_train, X_test, y_train, y_test = reduce_dim_strat(Xdata,ydata)
-    report, parameters = forester(X_train, X_test, y_train, y_test, len(presentclasses), presentclasses)
+    report, matrix, parameters = forester(X_train, X_test, y_train, y_test, len(presentclasses), presentclasses)
     reportdf = pd.DataFrame(report).transpose()
     # keep report output the same for key recording. 
     output_params(parameters, args.model, key, args.param_output_file)
@@ -246,8 +244,17 @@ def main():
                 args.label_output_file
                 )
     output_data(reportdf,args.model, key, args.data_output_file)
-    sns.heatmap(pd.DataFrame(report).iloc[:-1, :].T, annot=True)
-    plt.savefig('2_class25-noover.png')
+    prefix = '-'.join(presentclasses)
+    #sns.heatmap(pd.DataFrame(report).iloc[:-1, :].T, annot=True)
+    fig_title = prefix + '_' + key +'.png'
+    #plt.savefig('report_' + fig_title)
+    #plt.close
+    conmatrixdf = pd.DataFrame(matrix, index = presentclasses,
+                  columns = presentclasses)
+    plt.figure(figsize=(15,15))
+    sns.set(font_scale=1.2) # for label size
+    sns.heatmap(conmatrixdf, annot=True)#, annot_kws={"size": 16})
+    plt.savefig('9class_conf_' + fig_title)
     plt.close
 
 if __name__ == "__main__":
