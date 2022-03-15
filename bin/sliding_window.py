@@ -7,7 +7,7 @@ from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
 
 
 
-def pull_window(df, window_size):
+def singleclass_leaping_window(df, window_size):
     """
     Input: 
     df -- dataframe of cleaned input data, likely from a csv
@@ -61,14 +61,13 @@ def slide_window(df, window_size, slide: int = 1):
 
 
 
-def leaping_window(df, window_size):
+def multiclass_leaping_window(df, window_size):
     """
     Input: 
     df -- dataframe of input data, likely from a csv
     window_size -- number of rows of data to convert to 1 row for AcceleRater (25 = 1sec)
     Output:
     windows -- list of dataframes of accel data
-    allclasses -- list of the behavior classes that are present in the windows
     """
   #  classes = []
     windows = []

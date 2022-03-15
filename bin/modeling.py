@@ -10,7 +10,7 @@ from accelml_prep_csv import accel_data_csv_cleaner
 from accelml_prep_csv import accel_data_dir_cleaner 
 from accelml_prep_csv import output_prepped_data
 from rf import forester
-from sliding_window import pull_window
+from sliding_window import singleclass_leaping_window, multiclass_leaping_window
 from sliding_window import slide_window, reduce_dim_sampler
 from sliding_window import reduce_dim_strat_over
 from sliding_window import reduce_dim_strat
@@ -214,20 +214,20 @@ def main():
 
     df = df.rename(columns={'Behavior':'behavior'})
     key = construct_key(args.model, args.window_size)
-    #classdict, presentclasses = class_identifier(df, args.classes_of_interest)
+    classdict, presentclasses = class_identifier(df, args.classes_of_interest)
     #classdict = {'s': 0, 'l': 1, 'c': 1, 'h':2, 'm':3, 'a': 4, 'd': 5, 'i': 6, 'w': 7, 'r':8, 'z':9, 't': 10} # l&c combined
    # presentclasses = ['s', 'l&c', 'h', 'm', 'a', 'd', 'i', 'w', 'r', 'z', 't']
     # classdict = {'s': 0, 'l': 1, 't': 5, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':4, 'z':4, 'h':2, 'm':2} #6class
     # presentclasses = ['s', 'l&c', 'def_strike', 'feeding', 'rattle', 'agg_strike']
-    classdict = {'s': 0, 'l': 1, 'c': 1, 'h':2, 'm':2, 'a': 3, 'd': 4, 'i': 5, 'w': 6, 'r':7, 'z':7, 't': 8} # 9class
-    presentclasses = ['s', 'l&c', 'def_strike', 'a', 'd', 'i', 'w', 'rattle', 'agg_strike']
+    # classdict = {'s': 0, 'l': 1, 'c': 1, 'h':2, 'm':2, 'a': 3, 'd': 4, 'i': 5, 'w': 6, 'r':7, 'z':7, 't': 8} # 9class
+    # presentclasses = ['s', 'l&c', 'def_strike', 'a', 'd', 'i', 'w', 'rattle', 'agg_strike']
     #classdict = {'s': 0, 'l': 1, 't': 2, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':3, 'z':3, 'h':2, 'm':2} #4class
     if args.slide_window:
         windows = slide_window(df, int(args.window_size))
+        Xdata, ydata = multilabel_xy(windows, classdict)
     else:
-        windows = pull_window(df, int(args.window_size))
-
-    Xdata, ydata = singlelabel_xy(windows, classdict)
+        windows = singleclass_leaping_window(df, int(args.window_size))
+        Xdata, ydata = singlelabel_xy(windows, classdict)
     n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(presentclasses)
     X_train, X_test, y_train, y_test = reduce_dim_sampler(Xdata,ydata, args.oversample)
     report, matrix, parameters = forester(X_train, X_test, y_train, y_test, len(presentclasses), presentclasses)
