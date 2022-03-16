@@ -34,7 +34,8 @@ def singleclass_leaping_window(df, window_size, coi):
     allclasses = set(classes)
     diff = list(set(coi)-allclasses)
     if len(diff) > 0:
-        print("Classes " + str(diff) + " not found in any window.")
+        missingclasses = ','.join(str(c) for c in diff)
+        print("Classes " + missingclasses + " not found in any window.")
     print("Windows pulled")
     return windows#, list(allclasses)
 
@@ -61,7 +62,8 @@ def slide_window(df, window_size, coi, slide: int = 1):
     allclasses = set(classes)
     diff = list(set(coi)-allclasses)
     if len(diff) > 0:
-        print("Classes " + str(diff) + " not found in any window.")
+        missingclasses = ','.join(str(c) for c in diff)
+        print("Classes " + missingclasses + " not found in any window.")
     print("Windows pulled")
     return windows
 
@@ -87,7 +89,8 @@ def multiclass_leaping_window(df, window_size, coi):
     allclasses = set(classes)
     diff = list(set(coi)-allclasses)
     if len(diff) > 0:
-        print("Classes " + str(diff) + " not found in any window.")
+        missingclasses = ','.join(str(c) for c in diff)
+        print("Classes " + missingclasses + " not found in any window.")
     print("Windows pulled")
     return windows
 

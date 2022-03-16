@@ -186,7 +186,8 @@ def class_identifier(df, c_o_i):
             bdict[bclass] = count
         diff = list(set(c_o_i)-set(blist))
         if len(diff) > 0:
-            print("Classes " + str(diff) + " not found in input data.")
+            missingclasses = ','.join(str(c) for c in diff)
+            print("Classes " + missingclasses + " not found in input data.")
 
     return bdict, coi_list
 
