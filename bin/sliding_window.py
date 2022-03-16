@@ -7,7 +7,7 @@ from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
 
 
 
-def singleclass_leaping_window(df, window_size):
+def singleclass_leaping_window(df, window_size, coi):
     """
     Input: 
     df -- dataframe of cleaned input data, likely from a csv
@@ -16,7 +16,7 @@ def singleclass_leaping_window(df, window_size):
     windows -- list of lists of accel data (EX:[x,y,z,...,x,y,z,class_label])
     allclasses -- list of the behavior classes that are present in the windows
     """
-   # classes = []
+    classes = []
     windows = []
     number_of_rows_minus_window = df.shape[0] - window_size + 1
     if window_size > df.shape[0]:
@@ -30,14 +30,17 @@ def singleclass_leaping_window(df, window_size):
         # if window.iloc[0]['behavior'] not in class_list:
         #     continue
         windows.append(window)
-        #classes.append(window.iloc[0]['behavior'])
-    #allclasses = set(classes)
+        classes.append(window.iloc[0]['behavior'])
+    allclasses = set(classes)
+    diff = list(set(coi)-allclasses)
+    if len(diff) > 0:
+        print("Classes " + str(diff) + " not found in any window.")
     print("Windows pulled")
     return windows#, list(allclasses)
 
 
 
-def slide_window(df, window_size, slide: int = 1):
+def slide_window(df, window_size, coi, slide: int = 1):
     """
     Input: 
     df -- dataframe of input data, likely from a csv
@@ -46,7 +49,7 @@ def slide_window(df, window_size, slide: int = 1):
     windows -- list of dataframes of accel data
     allclasses -- list of the behavior classes that are present in the windows
     """
-  #  classes = []
+    classes = []
     windows = []
     number_of_rows_minus_window = df.shape[0] - window_size + 1
     if window_size > df.shape[0]:
@@ -54,14 +57,17 @@ def slide_window(df, window_size, slide: int = 1):
     for i in range(0, number_of_rows_minus_window, slide):
         window = df[i:i+window_size]
         windows.append(window)
-#        classes.append(list(window.Behavior.unique().sum()))
-   # allclasses = set(classes)
+        classes.append(list(window.Behavior.unique().sum()))
+    allclasses = set(classes)
+    diff = list(set(coi)-allclasses)
+    if len(diff) > 0:
+        print("Classes " + str(diff) + " not found in any window.")
     print("Windows pulled")
     return windows
 
 
 
-def multiclass_leaping_window(df, window_size):
+def multiclass_leaping_window(df, window_size, coi):
     """
     Input: 
     df -- dataframe of input data, likely from a csv
@@ -69,7 +75,7 @@ def multiclass_leaping_window(df, window_size):
     Output:
     windows -- list of dataframes of accel data
     """
-  #  classes = []
+    classes = []
     windows = []
     number_of_rows_minus_window = df.shape[0] - window_size + 1
     if window_size > df.shape[0]:
@@ -77,8 +83,11 @@ def multiclass_leaping_window(df, window_size):
     for i in range(0, number_of_rows_minus_window, window_size):
         window = df[i:i+window_size]
         windows.append(window)
-#        classes.append(list(window.Behavior.unique().sum()))
-   # allclasses = set(classes)
+        classes.append(list(window.Behavior.unique().sum()))
+    allclasses = set(classes)
+    diff = list(set(coi)-allclasses)
+    if len(diff) > 0:
+        print("Classes " + str(diff) + " not found in any window.")
     print("Windows pulled")
     return windows
 

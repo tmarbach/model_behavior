@@ -13,7 +13,7 @@ from rf import forester
 from sliding_window import singleclass_leaping_window, multiclass_leaping_window
 from sliding_window import slide_window, reduce_dim_sampler
 from sliding_window import reduce_dim_strat_over
-from sliding_window import reduce_dim_strat
+from transformations import transform_xy
 from sliding_window import multilabel_xy
 from sliding_window import singlelabel_xy
 import pandas as pd
@@ -184,8 +184,13 @@ def class_identifier(df, c_o_i):
         for bclass in c_o_i:
             count +=1
             bdict[bclass] = count
-           
+        diff = list(set(c_o_i)-set(blist))
+        if len(diff) > 0:
+            print("Classes " + str(diff) + " not found in input data.")
+
     return bdict, coi_list
+
+    
 
 
 #TODO:
@@ -198,7 +203,6 @@ def class_identifier(df, c_o_i):
 # add way to record options selected
 # allow for multiple csv inputs, 
     #check if the output prepped csv already exists
-# have code pull proper combo of sliding/leaping and xy construction
 
 def main():
     # full behavior list = 'tcadiwhslzrm'
@@ -227,7 +231,7 @@ def main():
         Xdata, ydata = multilabel_xy(windows, classdict)
     else:
         windows = singleclass_leaping_window(df, int(args.window_size))
-        Xdata, ydata = singlelabel_xy(windows, classdict)
+        Xdata, ydata = transform_xy(windows, classdict)
     n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(presentclasses)
     X_train, X_test, y_train, y_test = reduce_dim_sampler(Xdata,ydata, args.oversample)
     report, matrix, parameters = forester(X_train, X_test, y_train, y_test, len(presentclasses), presentclasses)
@@ -253,8 +257,8 @@ def main():
                   columns = presentclasses)
     plt.figure(figsize=(15,15))
     sns.set(font_scale=1.2) # for label size
-    sns.heatmap(conmatrixdf, annot=True)#, annot_kws={"size": 16})
-    plt.savefig('9class_conf_' + fig_title)
+    sns.heatmap(conmatrixdf, annot=True, fmt='g')#, annot_kws={"size": 16})
+    plt.savefig('all_ada_conf_' + fig_title)
     plt.close
 
 if __name__ == "__main__":
