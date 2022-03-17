@@ -7,7 +7,7 @@ from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
 
 
 
-def singleclass_leaping_window(df, window_size, coi):
+def singleclass_leaping_window(df, window_size, coi=False):
     """
     Input: 
     df -- dataframe of cleaned input data, likely from a csv
@@ -32,16 +32,17 @@ def singleclass_leaping_window(df, window_size, coi):
         windows.append(window)
         classes.append(window.iloc[0]['behavior'])
     allclasses = set(classes)
-    diff = list(set(coi)-allclasses)
-    if len(diff) > 0:
-        missingclasses = ','.join(str(c) for c in diff)
-        print("Classes " + missingclasses + " not found in any window.")
+    if coi:
+        diff = list(set(coi)-allclasses)
+        if len(diff) > 0:
+            missingclasses = ','.join(str(c) for c in diff)
+            print("Classes " + missingclasses + " not found in any window.")
     print("Windows pulled")
-    return windows#, list(allclasses)
+    return windows, list(allclasses)
 
 
 
-def slide_window(df, window_size, coi, slide: int = 1):
+def slide_window(df, window_size, coi=False, slide: int = 1):
     """
     Input: 
     df -- dataframe of input data, likely from a csv
@@ -60,16 +61,17 @@ def slide_window(df, window_size, coi, slide: int = 1):
         windows.append(window)
         classes.append(list(window.Behavior.unique().sum()))
     allclasses = set(classes)
-    diff = list(set(coi)-allclasses)
-    if len(diff) > 0:
-        missingclasses = ','.join(str(c) for c in diff)
-        print("Classes " + missingclasses + " not found in any window.")
+    if coi:
+        diff = list(set(coi)-allclasses)
+        if len(diff) > 0:
+            missingclasses = ','.join(str(c) for c in diff)
+            print("Classes " + missingclasses + " not found in any window.")
     print("Windows pulled")
-    return windows
+    return windows, list(allclasses)
 
 
 
-def multiclass_leaping_window(df, window_size, coi):
+def multiclass_leaping_window(df, window_size, coi=False):
     """
     Input: 
     df -- dataframe of input data, likely from a csv
@@ -87,12 +89,13 @@ def multiclass_leaping_window(df, window_size, coi):
         windows.append(window)
         classes.append(list(window.Behavior.unique().sum()))
     allclasses = set(classes)
-    diff = list(set(coi)-allclasses)
-    if len(diff) > 0:
-        missingclasses = ','.join(str(c) for c in diff)
-        print("Classes " + missingclasses + " not found in any window.")
+    if coi:
+        diff = list(set(coi)-allclasses)
+        if len(diff) > 0:
+            missingclasses = ','.join(str(c) for c in diff)
+            print("Classes " + missingclasses + " not found in any window.")
     print("Windows pulled")
-    return windows
+    return windows, list(allclasses)
 
 
 

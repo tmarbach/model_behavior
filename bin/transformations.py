@@ -42,7 +42,7 @@ def transform_xy(windows, classdict):
 def recall_heatmapper(conf_matrix_df, output_fig_name):
     df_norm_col=(conf_matrix_df-conf_matrix_df.mean())/conf_matrix_df.std()
     sns.heatmap(df_norm_col, annot=True, fmt='g')
-    sns.set(font_scale=1.2) # for label size
+    # sns.set(font_scale=1.2) # for label size
     plt.savefig('recall' + str(output_fig_name))
     plt.close
 
@@ -50,7 +50,7 @@ def recall_heatmapper(conf_matrix_df, output_fig_name):
 def precision_heatmapper(conf_matrix_df, output_fig_name):
     df_norm_row = conf_matrix_df.apply(lambda x: (x-x.mean())/x.std(), axis = 1)
     sns.heatmap(df_norm_row, annot=True, fmt='g')
-    plt.figure(figsize=(15,15))
-    sns.set(font_scale=1.2) # for label size
+    # plt.figure(figsize=(15,15))
+    # sns.set(font_scale=1.2) # for label size
     plt.savefig('precision-' + str(output_fig_name))
     plt.close

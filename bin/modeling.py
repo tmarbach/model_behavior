@@ -227,36 +227,38 @@ def main():
     # presentclasses = ['s', 'l&c', 'def_strike', 'a', 'd', 'i', 'w', 'rattle', 'agg_strike']
     #classdict = {'s': 0, 'l': 1, 't': 2, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':3, 'z':3, 'h':2, 'm':2} #4class
     if args.slide_window:
-        windows = slide_window(df, int(args.window_size), args.classes_of_interest)
+        windows, actual_classes = slide_window(df, int(args.window_size), args.classes_of_interest)
         Xdata, ydata = multilabel_xy(windows, classdict)
     else:
-        windows = singleclass_leaping_window(df, int(args.window_size), args.classes_of_interest)
+        windows, actual_classes = singleclass_leaping_window(df, int(args.window_size), args.classes_of_interest)
         Xdata, ydata = singlelabel_xy(windows, classdict)
     n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(presentclasses)
     X_train, X_test, y_train, y_test = reduce_dim_sampler(Xdata,ydata, args.oversample)
-    report, matrix, parameters = forester(X_train, X_test, y_train, y_test, len(presentclasses), presentclasses)
+    report, recall_matrix, precision_matrix, parameters = forester(X_train, X_test, y_train, y_test, len(actual_classes), actual_classes, args.data_output_file)
     reportdf = pd.DataFrame(report).transpose()
     # keep report output the same for key recording. 
-    output_params(parameters, args.model, key, args.param_output_file)
-    label_output(
-                args.model,
-                args.window_size,
-                n_samples,
-                n_features,
-                n_classes,
-                key,
-                args.label_output_file
-                )
+    #output_params(parameters, args.model, key, args.param_output_file)
+    # label_output(
+    #             args.model,
+    #             args.window_size,
+    #             n_samples,
+    #             n_features,
+    #             n_classes,
+    #             key,
+    #             args.label_output_file
+    #             )
     output_data(reportdf,args.model, key, args.data_output_file)
-    prefix = '-'.join(presentclasses)
-    #sns.heatmap(pd.DataFrame(report).iloc[:-1, :].T, annot=True)
-    fig_title = prefix + '_' + key +'.png'
+    # prefix = '-'.join(actual_classes)
+    # #sns.heatmap(pd.DataFrame(report).iloc[:-1, :].T, annot=True)
+    # fig_title = prefix + '_' + key +'.png'
     #plt.savefig('report_' + fig_title)
     #plt.close
-    conmatrixdf = pd.DataFrame(matrix, index = presentclasses,
-                  columns = presentclasses)
-    recall_heatmapper(conmatrixdf, args.data_output_file)
-    precision_heatmapper(conmatrixdf, args.data_output_file)
+    recall_matrixdf = pd.DataFrame(recall_matrix, index = actual_classes,columns = actual_classes)
+    recall_matrixdf.to_csv(args.label_output_file, index=False)
+    precision_matrixdf = pd.DataFrame(precision_matrix, index = actual_classes,columns = actual_classes)
+    precision_matrixdf.to_csv(args.param_output_file, index=False)
+    # recall_heatmapper(conmatrixdf, args.data_output_file)
+    # precision_heatmapper(conmatrixdf, args.data_output_file)
 
 
 if __name__ == "__main__":
