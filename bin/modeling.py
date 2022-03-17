@@ -13,7 +13,7 @@ from rf import forester
 from sliding_window import singleclass_leaping_window, multiclass_leaping_window
 from sliding_window import slide_window, reduce_dim_sampler
 from sliding_window import reduce_dim_strat_over
-from transformations import transform_xy
+from transformations import precision_heatmapper, recall_heatmapper
 from sliding_window import multilabel_xy
 from sliding_window import singlelabel_xy
 import pandas as pd
@@ -208,7 +208,6 @@ def class_identifier(df, c_o_i):
 def main():
     # full behavior list = 'tcadiwhslzrm'
     args = arguments()
-    #rough draft of allowing "prepped" data to bypass cleaning
     if args.raw_accel_csv.endswith('/'):
         df = accel_data_dir_cleaner(args.raw_accel_csv)
     elif "prepped_" in os.path.basename(args.raw_accel_csv):
@@ -228,11 +227,11 @@ def main():
     # presentclasses = ['s', 'l&c', 'def_strike', 'a', 'd', 'i', 'w', 'rattle', 'agg_strike']
     #classdict = {'s': 0, 'l': 1, 't': 2, 'c': 1, 'a': 3, 'd': 3, 'i': 3, 'w': 3, 'r':3, 'z':3, 'h':2, 'm':2} #4class
     if args.slide_window:
-        windows = slide_window(df, int(args.window_size))
+        windows = slide_window(df, int(args.window_size), args.classes_of_interest)
         Xdata, ydata = multilabel_xy(windows, classdict)
     else:
-        windows = singleclass_leaping_window(df, int(args.window_size))
-        Xdata, ydata = transform_xy(windows, classdict)
+        windows = singleclass_leaping_window(df, int(args.window_size), args.classes_of_interest)
+        Xdata, ydata = singlelabel_xy(windows, classdict)
     n_samples, n_features, n_classes = Xdata.shape[0], Xdata.shape[1]*Xdata.shape[2], len(presentclasses)
     X_train, X_test, y_train, y_test = reduce_dim_sampler(Xdata,ydata, args.oversample)
     report, matrix, parameters = forester(X_train, X_test, y_train, y_test, len(presentclasses), presentclasses)
@@ -256,11 +255,9 @@ def main():
     #plt.close
     conmatrixdf = pd.DataFrame(matrix, index = presentclasses,
                   columns = presentclasses)
-    plt.figure(figsize=(15,15))
-    sns.set(font_scale=1.2) # for label size
-    sns.heatmap(conmatrixdf, annot=True, fmt='g')#, annot_kws={"size": 16})
-    plt.savefig('all_ada_conf_' + fig_title)
-    plt.close
+    recall_heatmapper(conmatrixdf, args.data_output_file)
+    precision_heatmapper(conmatrixdf, args.data_output_file)
+
 
 if __name__ == "__main__":
     main()
