@@ -52,7 +52,10 @@ def arguments():
 
 
 def accel_data_csv_cleaner(accel_data_csv):
-    df = pd.read_csv(accel_data_csv)
+    if accel_data_csv.endswith(".xlsx"):
+        df = pd.read_excel(accel_data_csv)
+    else:
+        df = pd.read_csv(accel_data_csv)
     if 'Behavior' not in df.columns:
         raise ValueError("'Behavior' column is missing")
     if 'accX' not in df.columns:
