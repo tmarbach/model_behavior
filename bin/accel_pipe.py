@@ -1,4 +1,6 @@
-from curses import window
+#!/usr/bin/env python3
+
+
 import pandas as pd
 import numpy as np
 import argparse
@@ -7,11 +9,6 @@ import os
 from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
 
 
-#Input: csv file input data, one or more file paths
-    # classes of interest
-    # oversampling options
-    # window size option
-    # output file name as csv,  if none outputfilename = classes + windowsize + oversamplemethod + .csv
 
 def arguments():
     parser = argparse.ArgumentParser(
@@ -231,7 +228,6 @@ def output_data(totaldata, coi, windowsize, oversampling = False, output_filenam
 
 
 def main():
-    
     args = arguments()
     if args.raw_accel_csv.endswith('/'):
         df = accel_data_dir_cleaner(args.raw_accel_csv)
