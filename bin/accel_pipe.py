@@ -12,8 +12,8 @@ from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
 
 def arguments():
     parser = argparse.ArgumentParser(
-            prog='model_select', 
-            description="Select a ML model to apply to acceleration data",
+            prog='acceleRater_pipeline', 
+            description="Preps data for use in AcceleRater",
             epilog=""
                  ) 
     parser.add_argument(
@@ -33,7 +33,6 @@ def arguments():
             "-w",
             "--window-size",
             help="Number of rows to include in each data point (25 rows per second)",
-            default=False, 
             type=int
             )
     parser.add_argument(
@@ -49,6 +48,7 @@ def arguments():
             help="Directs the acceleRater data output to a filename of your choice",
             default=False
             )
+    return parser.parse_args()
 
 
 def accel_data_csv_cleaner(accel_data_csv):
@@ -160,6 +160,7 @@ def singleclass_leaping_window_exclusive(df, window_size, coi=False):
         if len(diff) > 0:
             missingclasses = ','.join(str(c) for c in diff)
             print("Classes " + missingclasses + " not found in any window.")
+    
     print("Windows pulled")
     return windows, list(allclasses)
 
@@ -175,6 +176,9 @@ def accel_singlelabel_xy(windows):
     positions = ['accX', 'accY', 'accZ']
     strikes = ['h', 'm']
     Xdata, ydata = [], []
+
+    print(len(windows))
+
     for window in windows:
         behavior = window['Behavior'].iloc[0]
         if behavior in strikes:
@@ -210,8 +214,11 @@ def accel_oversampler(Xdata,ydata, sampler_flag = False):
 
 
 
-def output_data(totaldata, coi, windowsize, oversampling = False, output_filename = False):
-    label = str(coi) + str(windowsize) + "_acceleRater.csv"
+def output_data(totaldata, windowsize, coi = False, oversampling = False, output_filename = False):
+    if coi:
+        coi_label = str(coi)
+    coi_label = 'all_classes'
+    label = coi_label + str(windowsize) + "_acceleRater.csv"
     if output_filename == False and oversampling == False:
         with open(label, "w", newline="") as f:
             writer = csv.writer(f)
@@ -237,11 +244,11 @@ def main():
         df = accel_data_csv_cleaner(args.raw_accel_csv)
         output_prepped_data(args.raw_accel_csv,df)
     classdict, coilist = class_identifier(df, args.classes_of_interest) # for indentifying missing classes
-    windows = singleclass_leaping_window_exclusive(df, int(args.window_size), args.classes_of_interest)
+    windows, all_classes = singleclass_leaping_window_exclusive(df, int(args.window_size), args.classes_of_interest)
     Xdata, ydata = accel_singlelabel_xy(windows)
     total_data = accel_oversampler(Xdata, ydata, args.oversample)      
 
-    output_data(total_data, args.window_size, args.oversample, args.acceleRater_data_output_file)
+    output_data(total_data, args.window_size, args.classes_of_interest, args.oversample, args.acceleRater_data_output_file)
     
 
 
